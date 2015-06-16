@@ -1,0 +1,93 @@
+/**
+ * Copyright 2014 Google Inc. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+aspect CloseAnalysis {
+  MethodAccess contributes closeFinding()
+      when !closeFinding().isEmpty()
+      to CompilationUnit.findings()
+      for compilationUnit();
+
+  /** Allow MethodAccess to lookup the enclosing compilation unit.  */
+  inh CompilationUnit MethodAccess.compilationUnit();
+
+  /** Generate a finding for method call after close() call.  */
+  syn lazy String MethodAccess.closeFinding() =
+    alreadyClosedStream()
+    ? finding(String.format(
+          "close() may have already been called on %s at this point",
+          prevExpr().prettyPrint()))
+    : ""; // The empty string represents no finding.
+
+  /** Check if the reciever of this method access was already closed. */
+  syn boolean MethodAccess.alreadyClosedStream() =
+      hasPrevExpr() && prevExpr().alreadyClosedStream(call());
+
+  syn boolean Expr.alreadyClosedStream(CfgMethodCall call) = false;
+
+  eq VarAccess.alreadyClosedStream(CfgMethodCall call) =
+    decl().type().isWriterOrReader()
+    && decl().isEffectivelyFinal()
+    && alreadyClosedStream(decl(), call);
+
+  /** Check if close() was already called on the same variable on a previously.  */
+  public boolean VarAccess.alreadyClosedStream(Variable receiver,
+      CfgMethodCall call) {
+    cfg().initPredecessors(); // Ensure predecessor lists are populated.
+    Set<CfgNode> visited = Collections.newSetFromMap(
+        new IdentityHashMap<CfgNode, Boolean>());
+    Queue<CfgNode> work = new LinkedList<CfgNode>();
+    work.add(call);
+    visited.add(call);
+    while (!work.isEmpty()) {
+      CfgNode node = work.poll();
+      for (CfgNode pred : node.predecessors) {
+        if (!visited.contains(pred)) {
+          if (isCloseCall(receiver, pred)) {
+            return true;
+          }
+          visited.add(pred);
+          if (!isAlreadyAnalyzed(receiver, pred)) {
+            work.add(pred);
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  /** Test if the CFG node is a call node for receiver.close(). */
+  private boolean VarAccess.isCloseCall(Variable receiver, CfgNode node) {
+    if (node.isCall()) {
+      CfgMethodCall call = (CfgMethodCall) node;
+      return call.methodAccess().hasReceiver(receiver)
+        && call.methodAccess().getID().equals("close");
+    }
+    return false;
+  }
+
+  /** Test if the CFG node is a call on the same receiver object. */
+  private boolean VarAccess.isAlreadyAnalyzed(Variable receiver, CfgNode node) {
+    return node.isCall() && receiver == decl();
+  }
+
+  /** Check if this is a Reader or Writer.  */
+  syn boolean TypeDecl.isWriterOrReader() =
+      (name().equals("Writer") || name().equals("Reader"))
+      && packageName().equals("java.io");
+
+  syn boolean MethodAccess.hasReceiver(Variable receiver) =
+      hasPrevExpr() && prevExpr().isVariable(receiver);
+}

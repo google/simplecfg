@@ -1,0 +1,20 @@
+# gradle build
+/build/
+/.gradle/
+
+# generated files
+/*.jar
+/src/gen/
+
+# generated graphs
+/testdata/*.png
+
+# vim
+*.swp
+
+# eclipse
+/.project
+/.classpath
+/.settings/
+/bin/
+

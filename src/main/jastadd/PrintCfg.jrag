@@ -1,0 +1,126 @@
+/**
+ * Copyright 2014 Google Inc. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.LinkedList;
+import java.util.Set;
+import java.util.Queue;
+
+/** Helper attributes used to print a CFG in dot graph format. */
+aspect PrintCfg {
+  public void BodyDecl.printReverseCfg() {
+    entry().initPredecessors();
+    System.out.println("digraph " + graphname() + " {");
+    exit().printReverseCfg();
+    System.out.println("}");
+  }
+
+  public void CfgNode.printReverseCfg() {
+    Set<CfgNode> visited = Collections.newSetFromMap(
+        new IdentityHashMap<CfgNode, Boolean>());
+    Queue<CfgNode> queue = new LinkedList<CfgNode>();
+
+    // Enqueue this node.
+    visited.add(this);
+    queue.add(this);
+
+    while (!queue.isEmpty()) {
+      CfgNode work = queue.poll();
+
+      System.out.format("  %s%s;\n", work.dotId(), work.dotAttributes());
+
+      // Add all out-edges for this node.
+      for (CfgNode succ : work.predecessors) {
+        System.out.format("  %s -> %s;\n", work.dotId(), succ.dotId());
+        if (!visited.contains(succ)) {
+          visited.add(succ);
+          queue.add(succ);
+        }
+      }
+    }
+  }
+
+  public void BodyDecl.printCfg() {
+    System.out.println("digraph " + graphname() + " {");
+    entry().printCfg();
+    System.out.println("}");
+  }
+
+  public void CfgNode.printCfg() {
+    Set<CfgNode> visited = Collections.newSetFromMap(
+        new IdentityHashMap<CfgNode, Boolean>());
+    Queue<CfgNode> queue = new LinkedList<CfgNode>();
+
+    // Enqueue this node.
+    visited.add(this);
+    queue.add(this);
+
+    while (!queue.isEmpty()) {
+      CfgNode work = queue.poll();
+
+      System.out.format("  %s%s;\n", work.dotId(), work.dotAttributes());
+
+      // Add all out-edges for this node.
+      for (CfgNode succ : work.successors()) {
+        System.out.format("  %s -> %s;\n", work.dotId(), succ.dotId());
+        if (!visited.contains(succ)) {
+          visited.add(succ);
+          queue.add(succ);
+        }
+      }
+    }
+  }
+
+  syn String BodyDecl.graphname() = "";
+  eq MethodDecl.graphname() = name();
+
+  /**
+   * The ID for this node in a dot graph.
+   */
+  syn String CfgNode.dotId() = String.format("n%08X", hashCode());
+
+  // TODO(joqvist): escape string literals in generated labels.
+  syn String CfgNode.dotAttributes() = " [label=\"" + name() + "\"]";
+  eq CfgBranch.dotAttributes() = " [label=\"" + name() + "\",shape=diamond]";
+  eq CfgException.dotAttributes() = " [label=\"" + name() + "\",shape=box]";
+  eq CfgTryEntry.dotAttributes() = " [label=\"" + name() + "\",shape=box]";
+
+  inh String CfgMethodCall.callLabel();
+  inh String CfgBranch.branchLabel();
+
+  syn String CfgNode.name();
+  eq CfgEntry.name() = "entry";
+  eq CfgExit.name() = "exit";
+  eq CfgMethodCall.name() = callLabel();
+  eq CfgBranch.name() = branchLabel();
+  eq CfgException.name() = "exception";
+  eq CfgTryEntry.name() = "try";
+
+  eq MethodAccess.call().callLabel() = name() + "()";
+
+  eq IfStmt.branch().branchLabel() = "if (" + getCondition().prettyPrint() + ")";
+  eq ConditionalExpr.branch().branchLabel() = "if (" + getCondition().prettyPrint() + ")";
+  eq ForStmt.branch().branchLabel() = "for (" + getCondition().prettyPrint() + ")";
+  eq WhileStmt.branch().branchLabel() = "while (" + getCondition().prettyPrint() + ")";
+  eq DoStmt.branch().branchLabel() = "do_while (" + getCondition().prettyPrint() + ")";
+  eq EnhancedForStmt.branch().branchLabel() = String.format("for (%s %s : %s)",
+      getVariableDeclaration().getTypeAccess().prettyPrint(),
+      getVariableDeclaration().getID(),
+      getExpr().prettyPrint());
+  eq SwitchStmt.branch().branchLabel() = "switch (" + getExpr().prettyPrint() + ")";
+}

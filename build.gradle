@@ -1,0 +1,46 @@
+buildscript {
+	repositories.mavenLocal()
+	repositories.maven {
+		url 'http://jastadd.org/mvn/'
+	}
+	dependencies {
+		classpath group: 'org.jastadd', name: 'jastaddgradle', version: '1.9.4'
+	}
+}
+
+apply plugin: 'java'
+apply plugin: 'application'
+apply plugin: 'jastadd'
+
+repositories.mavenLocal()
+
+// overwrite jastadd2 dependency set by jastaddgradle
+configurations {
+	all {
+		resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+			if (details.requested.name == 'jastadd2') {
+				details.useVersion '2.1.11-22-g493d35b'
+			}
+		}
+	}
+}
+
+dependencies {
+	testCompile group: 'com.google.truth', name: 'truth', version: '0.27'
+}
+
+jastadd {
+	modules 'modules' // Module source.
+	module = 'simplecfg' // The module to build.
+
+	astPackage = 'com.google.simplecfg.ast'
+	genDir = 'src/gen/java'
+	parser.name = 'JavaParser'
+}
+
+mainClassName = 'com.google.simplecfg.PrintCfg'
+jar.manifest.attributes 'Main-Class': mainClassName
+jar.destinationDir = projectDir
+
+sourceCompatibility = '1.8'
+targetCompatibility = '1.8'

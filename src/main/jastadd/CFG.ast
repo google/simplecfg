@@ -1,0 +1,44 @@
+/**
+ * Copyright 2014 Google Inc. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/** A node in a Control Flow Graph (CFG). */
+abstract CfgNode;
+
+/** The CFG entry node. */
+CfgEntry : CfgNode ::= <Succ:CfgNode>;
+
+/** The CFG exit node. */
+CfgExit : CfgNode;
+
+/** A method call in the CFG. */
+CfgMethodCall : CfgNode;
+
+/**
+ * A branch in the CFG. This represents a node that was not matched by the
+ * filter, but the branches should be connnected to the previous CFG node.
+ */
+CfgBranch : CfgNode;
+
+/**
+ * A branch in the CFG caused by potential thrown exceptions.
+ */
+CfgException : CfgNode;
+
+/**
+ * The entry of a try statement has a branch to the block and to each
+ * catch clause or finally block.
+ */
+CfgTryEntry : CfgNode;

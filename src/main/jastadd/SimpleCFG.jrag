@@ -1,0 +1,676 @@
+/**
+ * Copyright 2014 Google Inc. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.Iterator;
+import java.util.Set;
+
+/**
+ * Attributes to build a simplified Control Flow Graph (CFG) for a method.
+ * <p>
+ * The simple CFG contains only method calls and branches. The simple CFG has
+ * a naive exception model - any exception is assumed to be throwable by any
+ * statement.
+ */
+aspect SimpleCFG {
+
+  /** Return true if this node corresponds to a method call. */
+  syn boolean CfgNode.isCall() = false;
+  eq CfgMethodCall.isCall() = true;
+
+  /**
+   * Successor nodes in the CFG.
+   */
+  syn lazy Set<? extends CfgNode> CfgNode.successors();
+
+  eq CfgEntry.successors() = Collections.singleton(getSucc());
+
+  eq CfgExit.successors() = Collections.emptySet();
+
+  eq CfgMethodCall.successors() = succ();
+
+  eq CfgBranch.successors() = succ();
+
+  eq CfgException.successors() = succ();
+
+  eq CfgTryEntry.successors() = succ();
+
+  class IdentityTupleSet<E> implements Set<E> {
+    final E a, b;
+
+    public IdentityTupleSet(E a, E b) {
+      this.a = a;
+      this.b = b;
+    }
+
+    @Override
+    public boolean add(E e) {
+      throw new UnsupportedOperationException();
+    }
+    @Override
+    public boolean addAll(Collection<? extends E> e) {
+      throw new UnsupportedOperationException();
+    }
+    @Override
+    public void clear() {
+      throw new UnsupportedOperationException();
+    }
+    @Override
+    public boolean contains(Object o) {
+      return o == a || o == b;
+    }
+    @Override
+    public boolean containsAll(Collection<?> c) {
+      for (Object o : c) {
+        if (!contains(o)) {
+          return false;
+        }
+      }
+      return true;
+    }
+    @Override
+    public int hashCode() {
+      return a.hashCode() + b.hashCode();
+    }
+    @Override
+    public boolean isEmpty() {
+      return false;
+    }
+    @Override
+    public Iterator<E> iterator() {
+      return new Iterator<E>() {
+        int index = 0;
+        @Override
+        public boolean hasNext() {
+          return (a == b && index < 1)
+              || (a != b && index < 2);
+        }
+        @Override
+        public E next() {
+          return ++index == 1 ? a : b;
+        }
+        @Override
+        public void remove() {
+          throw new UnsupportedOperationException();
+        }
+      };
+    }
+    @Override
+    public boolean remove(Object o) {
+      throw new UnsupportedOperationException();
+    }
+    @Override
+    public boolean removeAll(Collection<?> c) {
+      throw new UnsupportedOperationException();
+    }
+    @Override
+    public boolean retainAll(Collection<?> c) {
+      throw new UnsupportedOperationException();
+    }
+    @Override
+    public int size() {
+      return a == b ? 1 : 2;
+    }
+    @Override
+    public Object[] toArray() {
+      return new Object[] { a, b };
+    }
+    @Override
+    public <T> T[] toArray(T[] array) {
+      array[0] = (T) a;
+      array[1] = (T) b;
+      return array;
+    }
+    @Override
+    public String toString() {
+      if (a == b) {
+        return "[" + a + "]";
+      } else {
+        return "[" + a + ", " + b + "]";
+      }
+    }
+  }
+
+  /** Successors to this branch node. */
+  inh Set<? extends CfgNode> CfgBranch.succ();
+
+  /** Successors to this method call node. */
+  inh Set<? extends CfgNode> CfgMethodCall.succ();
+
+  inh Set<? extends CfgNode> CfgException.succ();
+
+  inh Set<? extends CfgNode> CfgTryEntry.succ();
+
+  /** Build a small set with two elements. */
+  public <T> Set<T> ASTNode.smallSet(T a, T b) {
+    return new IdentityTupleSet<T>(a, b);
+  }
+
+  /**
+   * The entry CFG node of this statement. This is the next method call,
+   * branch, or exit node of the simplified CFG following the entry of
+   * this statement.
+   */
+  syn CfgNode Stmt.entry() = follow();
+
+  /**
+   * Find the next CFG node representing the next branch, or the next
+   * method access following this statement.
+   */
+  inh CfgNode Stmt.follow();
+
+  inh CfgNode Expr.follow();
+
+  // Needed for completeness, but never used by anything relevant.
+  eq Program.getChild().follow() = new CfgExit();
+
+  /**
+   * The entry node in a filtered CFG.
+   */
+  syn lazy CfgEntry BodyDecl.entry() = new CfgEntry(exit());
+
+  eq MethodDecl.entry() =
+      hasBlock()
+      ?  new CfgEntry(getBlock().entry())
+      : new CfgEntry(exit());
+
+  eq ConstructorDecl.entry() = new CfgEntry(getBlock().entry());
+
+  eq InstanceInitializer.entry() = new CfgEntry(getBlock().entry());
+
+  eq StaticInitializer.entry() = new CfgEntry(getBlock().entry());
+
+  /**
+   * The exit node in a filtered CFG.
+   */
+  syn nta CfgExit BodyDecl.exit() = new CfgExit();
+
+  eq Block.entry() {
+    if (getNumStmt() > 0) {
+      return getStmt(0).entry();
+    } else {
+      return follow();
+    }
+  }
+
+  eq LabeledStmt.entry() = getStmt().entry();
+
+  eq VarDeclStmt.entry() =
+      getNumSingleDecl() > 0
+      ? getSingleDecl(0).entry()
+      : follow();
+
+  eq VarDeclStmt.getSingleDecl(int index).follow() =
+      index+1 < getNumSingleDecl()
+      ? getSingleDecl(index+1).entry()
+      : follow();
+
+  inh CfgNode VariableDeclaration.follow();
+
+  syn CfgNode VariableDeclaration.entry() =
+      hasInit()
+      ? getInit().entry()
+      : follow();
+
+  eq SynchronizedStmt.entry() = getExpr().entry();
+
+  eq SynchronizedStmt.getExpr().follow() = getBlock().entry();
+
+  // Note: catch-all clauses get special treatment!
+
+  eq TryStmt.entry() = tryEntryNode();
+
+  eq TryWithResources.entry() =
+      getNumResource() > 0
+      ? getResource(0).entry()
+      : super.entry();
+
+  eq TryWithResources.getResource(int index).follow() =
+      index+1 < getNumResource()
+      ? getResource(index+1).entry()
+      : super.entry();
+
+  syn nta CfgTryEntry TryStmt.tryEntryNode() = new CfgTryEntry();
+
+  eq TryStmt.tryEntryNode().succ() =
+      joinSets(Collections.singleton(getBlock().entry()), catchBranches());
+
+  eq MethodAccess.exceptionNode().succ() = exceptionBranches();
+
+  eq ThrowStmt.exceptionNode().succ() = exceptionBranches();
+
+  /**
+   * Gives the set of CFG nodes targeted by an exception thrown at this
+   * statement. This includes the catch blocks of the enclosing try statement as
+   * well as the finally block. Does not include any targets following a
+   * catch of Throwable.
+   */
+  inh Set<? extends CfgNode> MethodAccess.exceptionBranches();
+  inh Set<? extends CfgNode> TryStmt.exceptionBranches();
+  inh Set<? extends CfgNode> ThrowStmt.exceptionBranches();
+
+  inh TypeDecl TryStmt.typeThrowable();
+
+  eq TryStmt.getBlock().exceptionBranches() = catchBranches();
+
+  /**
+   * Gives the set of CFG nodes targeted by an exception thrown inside this try
+   * statement. This includes the catch blocks of this try statements as
+   * well as the finally block. Does not include any targets following a
+   * catch of Throwable.
+   */
+  syn Set<? extends CfgNode> TryStmt.catchBranches() {
+    // Check for catch-all clauses (catching java.lang.Throwable).
+    Set<CfgNode> set = Collections.newSetFromMap(
+        new IdentityHashMap<CfgNode, Boolean>());
+    for (CatchClause clause : getCatchClauseList()) {
+      set.add(clause.getBlock().entry());
+      if (clause instanceof BasicCatch
+          && ((BasicCatch) clause).getParameter().type() == typeThrowable()) {
+        // This is a catch-all clause: no other clauses after this can catch an
+        // exception.
+        return set;
+      }
+    }
+    if (hasNonEmptyFinally()) {
+      set.add(getExceptionHandler().entry());
+    }
+    return set;
+  }
+
+  eq TryStmt.getExceptionHandler().follow() = exceptionNode();
+  eq TryStmt.exceptionNode().succ() = exceptionBranches();
+
+  eq BodyDecl.getChild().exceptionBranches() = Collections.singleton(exit());
+
+  eq CompilationUnit.getChild().exceptionBranches() = Collections.emptySet();
+  eq TypeDecl.getChild().exceptionBranches() = Collections.emptySet();
+
+  public <U, V extends U> Set<U> Stmt.joinSets(Set<U> a, Set<V> b) {
+    Set<U> set = Collections.newSetFromMap(
+        new IdentityHashMap<U, Boolean>());
+    set.addAll(a);
+    set.addAll(b);
+    return set;
+  }
+
+  eq TryStmt.getBlock().follow() =
+      hasNonEmptyFinally()
+      ? getFinally().entry()
+      : follow();
+
+  eq TryStmt.getCatchClause(int index).follow() =
+      hasNonEmptyFinally()
+      ? getFinally().entry()
+      : follow();
+
+  eq BreakStmt.entry() =
+      hasFinally()
+      ? getFinally().entry()
+      : targetStmt().follow();
+
+  eq BreakStmt.getFinally().follow() = targetStmt().follow();
+
+  eq ContinueStmt.entry() =
+      hasFinally()
+      ? getFinally().entry()
+      : targetStmt().entry();
+
+  eq ContinueStmt.getFinally().follow() = targetStmt().follow();
+
+  eq ReturnStmt.entry() =
+      hasResult()
+      ? getResult().entry()
+      : returnTarget();
+
+  eq ReturnStmt.getResult().follow() = returnTarget();
+
+  inh CompilationUnit ReturnStmt.compilationUnit();
+
+  syn CfgNode ReturnStmt.returnTarget() =
+      hasFinally()
+      ? getFinally().entry()
+      : methodExit();
+
+  eq ReturnStmt.getFinally().follow() = methodExit();
+
+  /**
+   * Finds the CFG exit node for the enclosing method, constructor, or
+   * initializer.
+   */
+  inh CfgNode ReturnStmt.methodExit();
+
+  eq BodyDecl.getChild().methodExit() = exit();
+
+  eq LambdaBody.getChild().methodExit() = exit();
+
+  eq ThrowStmt.entry() = getExpr().entry();
+
+  // Since we not have precise type lookups we need to approximate the possible
+  // exception branches.
+  eq ThrowStmt.getExpr().follow() = exceptionNode();
+
+  syn nta CfgException MethodAccess.exceptionNode() = new CfgException();
+  syn nta CfgException ThrowStmt.exceptionNode() = new CfgException();
+  syn nta CfgException TryStmt.exceptionNode() = new CfgException();
+
+  eq ExprStmt.entry() = getExpr().entry();
+
+  syn CfgNode Expr.entry();
+
+  eq ArrayAccess.entry() = getExpr().entry();
+
+  // All of these nodes are uninteresting for the simple CFG.
+  // Setting entry() = follow() makes sure the node is not included in the CFG.
+  eq AbstractWildcard.entry() = follow();
+  eq ClassAccess.entry() = follow();
+  eq DiamondAccess.entry() = follow();
+  eq PackageAccess.entry() = follow();
+  eq ParseName.entry() = follow(); // Always rewritten.
+  eq ParTypeAccess.entry() = follow();
+  eq SuperAccess.entry() = follow();
+  eq ThisAccess.entry() = follow();
+  eq VarAccess.entry() = follow();
+  eq TypeAccess.entry() = follow();
+  eq SyntheticTypeAccess.entry() = follow();
+  eq ClassReference.entry() = follow();
+  eq ArrayReference.entry() = follow();
+  eq LambdaExpr.entry() = follow();
+  eq TypeMethodReference.entry() = follow();
+  eq AmbiguousMethodReference.entry() = follow();
+
+  eq ParExpr.entry() = getExpr().entry();
+  eq CastExpr.entry() = getExpr().entry();
+  eq IntersectionCastExpr.entry() = getExpr().entry();
+  eq Unary.entry() = getOperand().entry();
+
+  eq ExprMethodReference.entry() = getExpr().entry();
+
+  /** The method call node for this method access. */
+  syn nta CfgMethodCall MethodAccess.call() = new CfgMethodCall();
+
+  eq MethodAccess.call().succ() =
+      isInsideTryBlock()
+      ? smallSet(exceptionNode(), follow())
+      : Collections.singleton(follow());
+
+  // If there are arguments control flow passes to the arguments first.
+  eq MethodAccess.entry() =
+      getNumArg() > 0
+      ? getArg(0).entry()
+      : call();
+
+  // If we have arguments the CfgMethodCall is placed after the last argument.
+  eq MethodAccess.getArg(int index).follow() =
+      index+1 < getNumArg()
+      ? getArg(index+1).entry()
+      : call();
+
+  // If there are arguments control flow passes to the arguments first.
+  eq ConstructorAccess.entry() =
+      getNumArg() > 0
+      ? getArg(0).entry()
+      : follow();
+
+  // If we have arguments the CfgMethodCall is placed after the last argument.
+  eq ConstructorAccess.getArg(int index).follow() =
+      index+1 < getNumArg()
+      ? getArg(index+1).entry()
+      : follow();
+
+  eq ClassInstanceExpr.entry() =
+      getNumArg() > 0
+      ? getArg(0).entry()
+      : getAccess().entry();
+
+  eq ClassInstanceExpr.getArg(int index).follow() =
+      index+1 < getNumArg()
+      ? getArg(index+1).entry()
+      : getAccess().entry();
+
+  eq ArrayInit.entry() =
+      getNumInit() > 0
+      ? getInit(0).entry()
+      : follow();
+
+  eq ArrayInit.getInit(int index).follow() =
+      index+1 < getNumInit()
+      ? getInit(index+1).entry()
+      : follow();
+
+  /** @return {@code true} if this statement is inside a try block. */
+  inh boolean MethodAccess.isInsideTryBlock();
+
+  eq CompilationUnit.getChild().isInsideTryBlock() = false;
+  eq TypeDecl.getChild().isInsideTryBlock() = false;
+  eq BodyDecl.getChild().isInsideTryBlock() = false;
+  eq LambdaBody.getChild().isInsideTryBlock() = false;
+  eq TryStmt.getBlock().isInsideTryBlock() = true;
+  eq NTAFinallyBlock.getChild().isInsideTryBlock() = false;
+
+  eq InstanceOfExpr.entry() = getExpr().entry();
+
+  eq AssignExpr.entry() = getSource().entry();
+
+  eq AssignExpr.getSource().follow() = getDest().entry();
+
+  eq Literal.entry() = follow();
+
+  eq ArrayCreationExpr.entry() =
+    hasArrayInit()
+    ? getArrayInit().entry()
+    : follow();
+
+  eq Binary.entry() = getLeftOperand().entry();
+  eq Binary.getLeftOperand().follow() = getRightOperand().entry();
+
+  eq AbstractDot.entry() = getLeft().entry();
+  eq AbstractDot.getLeft().follow() = getRight().entry();
+
+  /** The branch node for this conditional expression. */
+  syn nta CfgBranch ConditionalExpr.branch() = new CfgBranch();
+
+  eq ConditionalExpr.entry() = getCondition().entry();
+  eq ConditionalExpr.getCondition().follow() = branch();
+
+  eq ConditionalExpr.branch().succ() =
+    smallSet(getTrueExpr().entry(), getFalseExpr().entry());
+
+  /** The branch node for this statement. */
+  syn nta CfgBranch IfStmt.branch() = new CfgBranch();
+
+  eq IfStmt.entry() = getCondition().entry();
+
+  eq IfStmt.getCondition().follow() = branch();
+  eq IfStmt.getThen().follow() = follow();
+  eq IfStmt.getElse().follow() = follow();
+
+  eq IfStmt.branch().succ() =
+      hasElse()
+      ? smallSet(getThen().entry(), getElse().entry())
+      : smallSet(getThen().entry(), follow());
+
+  /** The branch node for this statement. */
+  syn nta CfgBranch ForStmt.branch() = new CfgBranch();
+
+  eq ForStmt.entry() =
+      getNumInitStmt() > 0
+      ? getInitStmt(0).entry()
+      : getCondition().entry();
+
+  eq ForStmt.getInitStmt(int index).follow() =
+      index+1 < getNumInitStmt()
+      ? getInitStmt(index+1).entry()
+      : getCondition().entry();
+
+  eq ForStmt.getCondition().follow() = branch();
+
+  eq ForStmt.getUpdateStmt(int index).follow() =
+      index+1 < getNumUpdateStmt()
+      ? getUpdateStmt(index+1).entry()
+      : getCondition().entry();
+
+  // Loop back.
+  eq ForStmt.getStmt().follow() =
+      getNumUpdateStmt() > 0
+      ? getUpdateStmt(0).entry()
+      : getCondition().entry();
+
+  eq ForStmt.branch().succ() {
+    if (getCondition().isTrue()) {
+      return Collections.singleton(getStmt().entry());
+    } else if (getCondition().isFalse()) {
+      return Collections.singleton(follow());
+    } else {
+      return smallSet(getStmt().entry(), follow());
+    }
+  }
+
+  /** The branch node for this statement. */
+  syn nta CfgBranch EnhancedForStmt.branch() = new CfgBranch();
+
+  eq EnhancedForStmt.branch().succ() =
+      smallSet(getStmt().entry(), follow());
+
+  eq EnhancedForStmt.entry() = getExpr().entry();
+
+  eq EnhancedForStmt.getExpr().follow() = branch();
+
+  eq EnhancedForStmt.getStmt().follow() = entry(); // Loop back.
+
+  /** The branch node for this statement. */
+  syn nta CfgBranch WhileStmt.branch() = new CfgBranch();
+
+  eq WhileStmt.entry() = getCondition().entry();
+
+  eq WhileStmt.getCondition().follow() = branch();
+
+  eq WhileStmt.getStmt().follow() = entry(); // Loop back.
+
+  eq WhileStmt.branch().succ() {
+    if (getCondition().isTrue()) {
+      return Collections.singleton(getStmt().entry());
+    } else if (getCondition().isFalse()) {
+      return Collections.singleton(follow());
+    } else {
+      return smallSet(getStmt().entry(), follow());
+    }
+  }
+
+  /** The branch node for this statement. */
+  syn nta CfgBranch DoStmt.branch() = new CfgBranch();
+
+  eq DoStmt.entry() = getStmt().entry();
+
+  eq DoStmt.getStmt().follow() = getCondition().entry();
+
+  eq DoStmt.getCondition().follow() = branch();
+
+  // Loop back.
+  eq DoStmt.branch().succ() {
+    if (getCondition().isTrue()) {
+      return Collections.singleton(getStmt().entry());
+    } else if (getCondition().isFalse()) {
+      return Collections.singleton(follow());
+    } else {
+      return smallSet(getStmt().entry(), follow());
+    }
+  }
+
+  syn nta CfgBranch SwitchStmt.branch() = new CfgBranch();
+
+  eq SwitchStmt.entry() = getExpr().entry();
+
+  eq SwitchStmt.getExpr().follow() = branch();
+
+  eq SwitchStmt.branch().succ() {
+    Set<CfgNode> set = Collections.newSetFromMap(
+        new IdentityHashMap<CfgNode, Boolean>());
+    boolean hasDefault = false;
+    for (Stmt stmt : getBlock().getStmtList()) {
+      if (stmt instanceof Case) {
+        set.add(stmt.entry());
+        if (stmt instanceof DefaultCase) {
+          hasDefault = true;
+        }
+      }
+    }
+    if (!hasDefault) {
+      set.add(follow());
+    }
+    return set;
+  }
+
+  eq BodyDecl.getChild().follow() = exit();
+
+  eq Block.getStmt(int index).follow() =
+      index+1 < getNumStmt()
+      ? getStmt(index+1).entry()
+      : follow();
+
+  syn lazy CfgEntry LambdaBody.entry();
+  eq BlockLambdaBody.entry() = new CfgEntry(getBlock().entry());
+  eq ExprLambdaBody.entry() = new CfgEntry(getExpr().entry());
+
+  syn nta CfgExit LambdaBody.exit() = new CfgExit();
+
+  eq BlockLambdaBody.getBlock().follow() = exit();
+  eq ExprLambdaBody.getExpr().follow() = exit();
+
+  /** Find the method access which this call node is associated with. */
+  inh MethodAccess CfgMethodCall.methodAccess();
+  eq MethodAccess.call().methodAccess() = this;
+
+  /** Find the entry node to the CFG this statement belongs to.  */
+  inh lazy CfgEntry Stmt.cfg();
+  inh lazy CfgEntry Expr.cfg();
+
+  eq BodyDecl.getChild().cfg() = entry();
+  eq LambdaBody.getChild().cfg() = entry();
+
+  eq CompilationUnit.getChild().cfg() {
+    throw new Error("Not in a CFG.");
+  }
+
+  /**
+   * Predecessors of this node in the CFG.  Predecessors are filled in when
+   * accessing the CFG through the cfg() attribute.
+   */
+  protected Collection<CfgNode> CfgNode.predecessors =
+      new LinkedList<CfgNode>();
+
+  private boolean CfgEntry.initializedPredecessors = false;
+
+  /** Initializes the predecessor sets for each node in a CFG. */
+  protected void CfgEntry.initPredecessors() {
+    if (!initializedPredecessors) {
+      initializedPredecessors = true;
+      Queue<CfgNode> queue = new LinkedList<CfgNode>();
+      queue.add(this);
+      while (!queue.isEmpty()) {
+        CfgNode node = queue.poll();
+        for (CfgNode succ : node.successors()) {
+          if (succ.predecessors.isEmpty()) {
+            queue.add(succ);
+          }
+          succ.predecessors.add(node);
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,221 @@
+/**
+ * Copyright 2014 Google Inc. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
+ * Replace type lookup to avoid parsing extra sources.
+ * All sources other than the one that is being analyzed is replaced
+ * by the Unknown type, or a placeholder type - a TypeDecl with just
+ * a name and package.
+ */
+aspect ClassPathFilter {
+  /**
+   * Lookup source path parts for compilation unit.
+   */
+  inh Collection<PathPart> CompilationUnit.sourcePathParts();
+  eq Program.getChild().sourcePathParts() = classPath.getSourcePath();
+
+  protected void Program.initializeLibraryTypes(Map<String, TypeDecl> libs) {
+    // Add all primitive types.
+    PrimitiveCompilationUnit unit = getPrimitiveCompilationUnit();
+    libs.put("@primitive.boolean", unit.typeBoolean());
+    libs.put("@primitive.byte", unit.typeByte());
+    libs.put("@primitive.short", unit.typeShort());
+    libs.put("@primitive.char", unit.typeChar());
+    libs.put("@primitive.int", unit.typeInt());
+    libs.put("@primitive.long", unit.typeLong());
+    libs.put("@primitive.float", unit.typeFloat());
+    libs.put("@primitive.double", unit.typeDouble());
+    libs.put("@primitive.null", unit.typeNull());
+    libs.put("@primitive.void", unit.typeVoid());
+    libs.put("@primitive.Unknown", unit.unknownType());
+
+    // All types that need to be distinguishable in the code being analyzed
+    // should be added as placeholders here.
+    // This list contains all types which are looked up explicitly in the
+    // ExtendJ frontend code with lookupType(pkg, name) All type lookups that
+    // don't match a placeholder type get mapped to the Unknown type.
+    addPlaceholderType(libs, "java.lang", "Object");
+    addPlaceholderType(libs, "java.lang", "AutoCloseable");
+    addPlaceholderType(libs, "java.lang", "Class");
+    addPlaceholderType(libs, "java.lang", "Cloneable");
+    addPlaceholderType(libs, "java.lang", "Error");
+    addPlaceholderType(libs, "java.lang", "Exception");
+    addPlaceholderType(libs, "java.lang", "FunctionalInterface");
+    addPlaceholderType(libs, "java.lang", "NullPointerException");
+    addPlaceholderType(libs, "java.lang", "Throwable");
+    addPlaceholderType(libs, "java.lang", "Enum");
+    addPlaceholderType(libs, "java.lang", "Iterable");
+    addPlaceholderType(libs, "java.lang", "Iterator");
+    addPlaceholderType(libs, "java.lang", "RuntimeException");
+
+    // Annotations and boxed primitive types are required
+    // to do some simple type analysis.
+
+    // Add annotation types.
+    addPlaceholderType(libs, "java.lang.annotation", "Target");
+    addPlaceholderType(libs, "java.lang.annotation", "Retention");
+    addPlaceholderType(libs, "java.lang.annotation", "Inherited");
+    addPlaceholderType(libs, "java.lang", "SuppressWarnings");
+    addPlaceholderType(libs, "java.lang", "Override");
+    addPlaceholderType(libs, "java.lang", "Serializable");
+
+    // Boxed primitive types.
+    addPlaceholderType(libs, "java.lang", "Integer");
+    addPlaceholderType(libs, "java.lang", "Float");
+    addPlaceholderType(libs, "java.lang", "Short");
+    addPlaceholderType(libs, "java.lang", "Byte");
+    addPlaceholderType(libs, "java.lang", "Character");
+    addPlaceholderType(libs, "java.lang", "Long");
+    addPlaceholderType(libs, "java.lang", "Double");
+    addPlaceholderType(libs, "java.lang", "String");
+    addPlaceholderType(libs, "java.lang", "Boolean");
+    addPlaceholderType(libs, "java.lang", "Void");
+
+    // Inspected types.
+    addPlaceholderType(libs, "java.io", "Writer");
+    addPlaceholderType(libs, "java.io", "Reader");
+  }
+
+  refine LookupType
+  public TypeDecl Program.lookupLibType(String packageName, String typeName) {
+    String fullName = packageName.equals("")
+        ? typeName
+        : packageName + "." + typeName;
+
+    // Check the primitive types.
+    if (!primitiveTypeMapInitialized) {
+      initializeLibraryTypes(libraryTypeMap);
+      primitiveTypeMapInitialized = true;
+    }
+
+    if (libraryTypeMap.containsKey(fullName)) {
+      return libraryTypeMap.get(fullName);
+    }
+
+    // Check the library:
+    //  We avoid creating a null NTA value here by first using the
+    //  getSourceCompilationUnit reference attribute to check for an existing
+    //  CompilationUnit. If one is found we can safely call
+    //  getLibCompilationUnit which creates the NTA:
+    if (getSourceCompilationUnit(fullName) != null) {
+      CompilationUnit libUnit = getLibCompilationUnit(fullName);
+      for (int j = 0; j < libUnit.getNumTypeDecl(); j++) {
+        TypeDecl type = libUnit.getTypeDecl(j);
+        if (!libraryTypeMap.containsKey(type.fullName())) {
+          libraryTypeMap.put(type.fullName(), type);
+        }
+      }
+      if (libraryTypeMap.containsKey(fullName)) {
+        return libraryTypeMap.get(fullName);
+      }
+    }
+
+    return unknownType();
+  }
+
+  // Store library units (including primitive unit) in a parameterized NTA
+  refine LookupType
+  eq Program.getLibCompilationUnit(String fullName) {
+    return getSourceCompilationUnit(fullName);
+  }
+
+  /**
+   * Helper attribute for caching source compilation unit lookups.
+   */
+  syn lazy CompilationUnit Program.getSourceCompilationUnit(String name) {
+    return classPath.getSourceCompilationUnit(name);
+  }
+
+  /**
+   * Add a placeholder type declaration to the library type map.
+   * This triggers evaluation of a placeholder type NTA and a placeholder
+   * compilation unit NTA.
+   */
+  private void Program.addPlaceholderType(Map<String, TypeDecl> libs,
+      String packageName, String typeName) {
+    String fullName = packageName.equals("") ? typeName : packageName + "." + typeName;
+    CompilationUnit cu = placeholderCompilationUnit(packageName);
+    cu.setFromSource(false);
+    cu.setClassSource(ClassSource.NONE);
+    TypeDecl placeholder = cu.placeholderTypeDecl(typeName);
+    libs.put(fullName, placeholder);
+  }
+
+  /**
+   * Build a placeholder compilation unit for types in a package.
+   */
+  syn nta CompilationUnit Program.placeholderCompilationUnit(String packageName) {
+    CompilationUnit u = new CompilationUnit();
+    u.setPackageDecl(packageName);
+    return u;
+  }
+
+  /**
+   * Build placeholder type declaration.
+   */
+  syn nta TypeDecl CompilationUnit.placeholderTypeDecl(String typeName) {
+    PlaceholderTypeDecl decl = new PlaceholderTypeDecl();
+    decl.setModifiers(new Modifiers(new List().add(new Modifier("public"))));
+    decl.setID(typeName);
+    return decl;
+  }
+
+  /**
+   * Load a compilation unit from disk, selecting a class file
+   * if one exists that is not older than a corresponding source
+   * file, otherwise the source file is selected.
+   *
+   * This method is called by the LibCompilationUnit NTA.  We rely on the
+   * result of this method being cached because it will return a newly parsed
+   * compilation unit each time it is called.
+   *
+   * Synchronized to prepare for future concurrent type lookups in a single AST.
+   *
+   * @return the loaded compilation unit, or {@code null} if no compilation
+   * unit matching the type name was found
+   */
+  public synchronized CompilationUnit ClassPath.getSourceCompilationUnit(
+      String typeName) {
+    try {
+      initPaths();
+      ClassSource sourcePart = ClassSource.NONE;
+      for (PathPart part: sourcePath) {
+        sourcePart = part.findSource(typeName);
+        if (sourcePart != ClassSource.NONE) {
+          break;
+        }
+      }
+
+      if (sourcePart != ClassSource.NONE) {
+        CompilationUnit unit = sourcePart.parseCompilationUnit(program);
+        int index = typeName.lastIndexOf('.');
+        if (index == -1) {
+          return unit;
+        }
+        String pkgName = typeName.substring(0, index);
+        if (pkgName.equals(unit.getPackageDecl())) {
+          return unit;
+        }
+      }
+      return null;
+    } catch(IOException e) {
+      e.printStackTrace(System.err);
+    }
+    return null;
+  }
+
+}
+
