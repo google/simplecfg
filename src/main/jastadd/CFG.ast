@@ -26,15 +26,10 @@ CfgExit : CfgNode;
 /** A method call in the CFG. */
 CfgMethodCall : CfgNode;
 
-/**
- * A branch in the CFG. This represents a node that was not matched by the
- * filter, but the branches should be connnected to the previous CFG node.
- */
+/** A conditional branch in the CFG.  */
 CfgBranch : CfgNode;
 
-/**
- * A branch in the CFG caused by potential thrown exceptions.
- */
+/** A branch in the CFG caused by potential thrown exceptions.  */
 CfgException : CfgNode;
 
 /**
