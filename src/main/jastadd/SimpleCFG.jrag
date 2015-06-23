@@ -268,6 +268,8 @@ aspect SimpleCFG {
 
   eq TryStmt.getBlock().exceptionBranches() = catchBranches();
 
+  eq TryWithResources.getResource().exceptionBranches() = catchBranches();
+
   /**
    * Gives the set of CFG nodes targeted by an exception thrown inside this try
    * statement. This includes the catch blocks of this try statements as
@@ -365,8 +367,19 @@ aspect SimpleCFG {
   // exception branches.
   eq ThrowStmt.getExpr().follow() = exceptionNode();
 
+  /**
+   * This node represents the control flow path taken when an exception
+   * interrupts the call.
+   */
   syn nta CfgException MethodAccess.exceptionNode() = new CfgException();
+
+  /** This node represents the control flow following the exception.  */
   syn nta CfgException ThrowStmt.exceptionNode() = new CfgException();
+
+  /**
+   * This node represents the control flow path taken if an exception
+   * is thrown in the start of a try statement.
+   */
   syn nta CfgException TryStmt.exceptionNode() = new CfgException();
 
   eq ExprStmt.entry() = getExpr().entry();
@@ -405,7 +418,7 @@ aspect SimpleCFG {
   syn nta CfgMethodCall MethodAccess.call() = new CfgMethodCall();
 
   eq MethodAccess.call().succ() =
-      isInsideTryBlock()
+      isInsideTryBlockOrResource()
       ? smallSet(exceptionNode(), follow())
       : Collections.singleton(follow());
 
@@ -454,14 +467,15 @@ aspect SimpleCFG {
       : follow();
 
   /** @return {@code true} if this statement is inside a try block. */
-  inh boolean MethodAccess.isInsideTryBlock();
+  inh boolean MethodAccess.isInsideTryBlockOrResource();
 
-  eq CompilationUnit.getChild().isInsideTryBlock() = false;
-  eq TypeDecl.getChild().isInsideTryBlock() = false;
-  eq BodyDecl.getChild().isInsideTryBlock() = false;
-  eq LambdaBody.getChild().isInsideTryBlock() = false;
-  eq TryStmt.getBlock().isInsideTryBlock() = true;
-  eq NTAFinallyBlock.getChild().isInsideTryBlock() = false;
+  eq CompilationUnit.getChild().isInsideTryBlockOrResource() = false;
+  eq TypeDecl.getChild().isInsideTryBlockOrResource() = false;
+  eq BodyDecl.getChild().isInsideTryBlockOrResource() = false;
+  eq LambdaBody.getChild().isInsideTryBlockOrResource() = false;
+  eq TryStmt.getBlock().isInsideTryBlockOrResource() = true;
+  eq TryWithResources.getResource().isInsideTryBlockOrResource() = true;
+  eq NTAFinallyBlock.getChild().isInsideTryBlockOrResource() = false;
 
   eq InstanceOfExpr.entry() = getExpr().entry();
 

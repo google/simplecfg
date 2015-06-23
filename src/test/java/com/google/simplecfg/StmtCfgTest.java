@@ -540,17 +540,43 @@ public class StmtCfgTest {
   @Test public void genTryWithResources01() {
     CfgNode entry = parseFile("GenTryWithResources01");
     CfgNode openStream = succ(entry, "openStream()");
-    CfgNode tryEntry = succ(openStream, "try");
-    CfgNode[] tryEntrySucc = succ(tryEntry, "c()", "f()", "stmt()");
-    CfgNode f = succ(tryEntrySucc[0], "f()");
-    CfgNode exception = succ(tryEntrySucc[1], "exception");
-    CfgNode[] stmtSucc = succ(tryEntrySucc[2], "exception", "f()");
+    CfgNode[] openStreamSucc = succ(openStream, "exception", "try");
+    CfgNode[] exceptionSucc = succ(openStreamSucc[0], "c()", "f()");
+    CfgNode[] tryEntrySucc = succ(openStreamSucc[1], "c()", "stmt()", "f()");
+    assertThat(tryEntrySucc[2]).isSameAs(exceptionSucc[1]);
+    assertThat(tryEntrySucc[0]).isSameAs(exceptionSucc[0]);
+    CfgNode f = succ(exceptionSucc[0], "f()");
+    CfgNode exception = succ(exceptionSucc[1], "exception");
+    CfgNode[] stmtSucc = succ(tryEntrySucc[1], "exception", "f()");
     assertThat(stmtSucc[1]).isSameAs(f);
     CfgNode exit = succ(f, "exit");
     assertThat(succ(exception, "exit")).isSameAs(exit);
-    CfgNode[] exceptionSucc = succ(stmtSucc[0], "c()", "f()");
-    assertThat(exceptionSucc[1]).isSameAs(tryEntrySucc[1]);
-    assertThat(exceptionSucc[0]).isSameAs(tryEntrySucc[0]);
+    CfgNode[] exceptionSucc2 = succ(stmtSucc[0], "c()", "f()");
+    assertThat(exceptionSucc2[0]).isSameAs(exceptionSucc[0]);
+    assertThat(exceptionSucc2[1]).isSameAs(exceptionSucc[1]);
+  }
+
+  @Test public void genTryWithResources02() {
+    CfgNode entry = parseFile("GenTryWithResources02");
+    CfgNode o1 = succ(entry, "o1()");
+    CfgNode[] o1Succ = succ(o1, "exception", "o2()");
+    CfgNode[] exceptionSucc = succ(o1Succ[0], "c()", "f()");
+    CfgNode[] o2Succ = succ(o1Succ[1], "exception", "try");
+    CfgNode f = succ(exceptionSucc[0], "f()");
+    CfgNode exception = succ(exceptionSucc[1], "exception");
+    CfgNode[] exceptionSucc2 = succ(o2Succ[0], "c()", "f()");
+    assertThat(exceptionSucc2[0]).isSameAs(exceptionSucc[0]);
+    assertThat(exceptionSucc2[1]).isSameAs(exceptionSucc[1]);
+    CfgNode[] tryEntrySucc = succ(o2Succ[1], "c()", "stmt()", "f()");
+    assertThat(tryEntrySucc[2]).isSameAs(exceptionSucc[1]);
+    assertThat(tryEntrySucc[0]).isSameAs(exceptionSucc[0]);
+    CfgNode exit = succ(f, "exit");
+    assertThat(succ(exception, "exit")).isSameAs(exit);
+    CfgNode[] stmtSucc = succ(tryEntrySucc[1], "exception", "f()");
+    assertThat(stmtSucc[1]).isSameAs(f);
+    CfgNode[] exceptionSucc3 = succ(stmtSucc[0], "c()", "f()");
+    assertThat(exceptionSucc3[1]).isSameAs(exceptionSucc[1]);
+    assertThat(exceptionSucc3[0]).isSameAs(exceptionSucc[0]);
   }
 
 }
