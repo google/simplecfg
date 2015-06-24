@@ -29,9 +29,11 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import java.io.FileInputStream;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
@@ -73,7 +75,7 @@ public class StmtCfgTest {
    * Assert and return a single successor of the node.
    */
   private static CfgNode succ(CfgNode node, String successor) {
-    assertThat(node.successors()).containsExactly(successor);
+    assertThat(cfgNames(node.successors())).containsExactly(successor);
     return node.successors().iterator().next();
   }
 
@@ -82,7 +84,7 @@ public class StmtCfgTest {
    * using the same ordering as the input array.
    */
   private static CfgNode[] succ(CfgNode node, String... successors) {
-    assertThat(node.successors()).containsExactly((Object[]) successors);
+    assertThat(cfgNames(node.successors())).containsExactly((Object[]) successors);
 
     // Ensure no duplicate successor names.
     boolean duplicates = false;
@@ -104,6 +106,17 @@ public class StmtCfgTest {
       result[i] = successorMap.get(successors[i]);
     }
     return result;
+  }
+
+  /** Convert a collection of CfgNodes to a collection of of the node names.  */
+  private static Iterable<String> cfgNames(Iterable<? extends CfgNode> cfgs) {
+    // Use a linked list because we need to preserve duplicate names.
+    // TODO(joqvist): Use Java 8 stream api to map CfgNode -> String.
+    Collection<String> names = new LinkedList<>();
+    for (CfgNode cfg : cfgs) {
+      names.add(cfg.toString());
+    }
+    return names;
   }
 
   @Test public void ifStmt01() {
@@ -324,7 +337,7 @@ public class StmtCfgTest {
     CfgNode entry = parseFile("TryStmt03");
     CfgNode tryEntry = succ(entry, "try");
     CfgNode[] targets = succ(tryEntry, "if (condition)", "x()");
-    assertThat(targets[0].successors()).containsExactly("x()", "x()");
+    assertThat(cfgNames(targets[0].successors())).containsExactly("x()", "x()");
 
     CfgNode exception = succ(targets[1], "exception");
     CfgNode exit = succ(exception, "exit");

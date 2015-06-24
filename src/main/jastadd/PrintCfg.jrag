@@ -23,6 +23,12 @@ import java.util.Queue;
 
 /** Helper attributes used to print a CFG in dot graph format. */
 aspect PrintCfg {
+
+  @Override
+  public String CfgNode.toString() {
+    return name();
+  }
+
   public void BodyDecl.printReverseCfg() {
     entry().initPredecessors();
     System.out.println("digraph " + graphname() + " {");
