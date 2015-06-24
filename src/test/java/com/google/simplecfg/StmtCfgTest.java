@@ -36,7 +36,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
-/** Tests for if statement CFGs. */
+/** Tests for simplified Control Flow Graphs built for methods/constructors/initializers.  */
 @RunWith(JUnit4.class)
 public class StmtCfgTest {
 
