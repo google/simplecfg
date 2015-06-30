@@ -83,10 +83,6 @@ aspect ClassPathFilter {
     addPlaceholderType(libs, "java.lang", "String");
     addPlaceholderType(libs, "java.lang", "Boolean");
     addPlaceholderType(libs, "java.lang", "Void");
-
-    // Inspected types.
-    addPlaceholderType(libs, "java.io", "Writer");
-    addPlaceholderType(libs, "java.io", "Reader");
   }
 
   refine LookupType
