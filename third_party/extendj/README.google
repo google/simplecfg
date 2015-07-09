@@ -1,0 +1,10 @@
+URL: https://bitbucket.org/extendj/extendj/get/10a33c4.tar.gz
+Version: 10a33c4
+License: Modified BSD
+License File: LICENSE
+
+Description:
+Extensible Java compiler built using JastAdd (see http://jastadd.org).
+
+Local Modifications:
+None

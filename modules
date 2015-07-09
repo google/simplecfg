@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-include("third_party/extendj/modules")
+include("third_party/extendj/git/modules")
 
 module("simplecfg") {
 
