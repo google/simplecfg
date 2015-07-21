@@ -1,0 +1,148 @@
+/**
+ * Copyright 2015 Google Inc. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
+ * This aspect adds an API for searching for nodes matching some property in a Control Flow Graph.
+ */
+aspect CfgSearch {
+  enum SearchAction {
+    /**
+     * The search is complete because the currently processed edge successor matches the search.
+     */
+    SUCCESSOR_MATCH,
+    /**
+     * The search is complete because the currently processed edge predecessor matches the search.
+     */
+    PREDECESSOR_MATCH,
+    /**
+     * The search should skip adding the successors from the successor of the current edge.
+     */
+    SKIP,
+    /**
+     * The search continues as normal, adding successors from the successor of the current edge.
+     */
+    CONTINUE,
+    /**
+     * The search does not process additional edges to the current successor.
+     */
+    IGNORE
+  }
+
+  /** A CFG visitor decides which nodes to process based on the current edge (pred, succ). */
+  interface CfgVisitor {
+    /**
+     * Returns the action a Breadth-First search should take for this edge.
+     * @param pred Edge source.
+     * @param succ Edge destination.
+     */
+    public SearchAction processEdge(CfgNode pred, CfgNode succ);
+  }
+
+  /**
+   * Performs a Breadth-First Search over the CFG successors starting from this node.
+   * @param visitor a visitor that decides when the search is terminated and which
+   * successors to process
+   * @return {@code null} if no match was found
+   */
+  public CfgNode CfgNode.bfs(CfgVisitor visitor) {
+    Set<CfgNode> visited = Collections.newSetFromMap(
+        new IdentityHashMap<CfgNode, Boolean>());
+    Queue<CfgNode> work = new LinkedList<CfgNode>();
+    work.add(this);
+    while (!work.isEmpty()) {
+      CfgNode node = work.poll();
+      for (CfgNode succ : node.successors()) {
+        if (!visited.contains(succ)) {
+          switch (visitor.processEdge(node, succ)) {
+            case SUCCESSOR_MATCH:
+              return succ;
+            case PREDECESSOR_MATCH:
+              return node;
+            case SKIP:
+              continue;
+            case CONTINUE:
+              work.add(succ);
+              visited.add(succ);
+              break;
+            case IGNORE:
+              visited.add(succ);
+              break;
+          }
+        }
+      }
+    }
+    // The search matched nothing and we exhausted all successors.
+    return null;
+  }
+
+  inh lazy CfgEntry CfgNode.cfg();
+
+  /**
+   * Performs a Breadth-First Search over the CFG predecessors starting from this node.
+   * @param visitor a visitor that decides when the search is terminated and which
+   * predecessors to process
+   * @return {@code null} if no match was found
+   */
+  public CfgNode CfgNode.reverseBfs(CfgVisitor visitor) {
+    Set<CfgNode> visited = Collections.newSetFromMap(
+        new IdentityHashMap<CfgNode, Boolean>());
+    cfg().initPredecessors();
+    Queue<CfgNode> work = new LinkedList<CfgNode>();
+    work.add(this);
+    while (!work.isEmpty()) {
+      CfgNode node = work.poll();
+      for (CfgNode pred : node.predecessors) {
+        if (!visited.contains(pred)) {
+          switch (visitor.processEdge(node, pred)) {
+            case SUCCESSOR_MATCH:
+              return pred;
+            case PREDECESSOR_MATCH:
+              return node;
+            case SKIP:
+              continue;
+            case CONTINUE:
+              work.add(pred);
+              visited.add(pred);
+              break;
+            case IGNORE:
+              visited.add(pred);
+              break;
+          }
+        }
+      }
+    }
+    // The search matched nothing and we exhausted all predecessors.
+    return null;
+  }
+
+  /** A matcher used to search for particular nodes in a CFG. */
+  interface CfgMatcher {
+    public boolean match(CfgNode node);
+  }
+
+  /** Search for a previous node matching the matcher, starting from the current CFG node. */
+  public CfgNode CfgNode.findPreviousNode(final CfgMatcher matcher) {
+    return reverseBfs(new CfgVisitor() {
+      @Override
+      public SearchAction processEdge(CfgNode pred, CfgNode succ) {
+        return matcher.match(succ) ? SearchAction.SUCCESSOR_MATCH : SearchAction.CONTINUE;
+      }
+    });
+  }
+
+  /** Check if there is a previous node matching the matcher, starting from the current CFG node. */
+  syn boolean CfgNode.hasPreviousNode(CfgMatcher matcher) = null != findPreviousNode(matcher);
+}

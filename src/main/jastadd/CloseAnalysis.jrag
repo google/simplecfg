@@ -26,8 +26,8 @@ aspect CloseAnalysis {
     addPlaceholderType(libs, "java.io", "Reader");
   }
 
-  MethodAccess contributes closeFinding()
-      when !closeFinding().isEmpty()
+  MethodAccess contributes alreadyClosedFinding()
+      when alreadyClosedStream()
       to CompilationUnit.findings()
       for compilationUnit();
 
@@ -35,64 +35,43 @@ aspect CloseAnalysis {
   inh CompilationUnit MethodAccess.compilationUnit();
 
   /** Generate a finding for method call after close() call.  */
-  syn lazy String MethodAccess.closeFinding() =
-    alreadyClosedStream()
-    ? finding(String.format(
-          "close() may have already been called on %s at this point",
-          prevExpr().prettyPrint()))
-    : ""; // The empty string represents no finding.
+  syn lazy String MethodAccess.alreadyClosedFinding() =
+      finding(String.format("close() may have already been called on %s at this point",
+          prevExpr().prettyPrint()));
 
   /** Check if the reciever of this method access was already closed. */
-  syn boolean MethodAccess.alreadyClosedStream() =
-      hasPrevExpr() && prevExpr().alreadyClosedStream(call());
-
-  syn boolean Expr.alreadyClosedStream(CfgMethodCall call) = false;
-
-  eq VarAccess.alreadyClosedStream(CfgMethodCall call) =
-    decl().type().isWriterOrReader()
-    && decl().isEffectivelyFinal()
-    && alreadyClosedStream(decl(), call);
-
-  /** Check if close() was already called on the same variable on a previously.  */
-  public boolean VarAccess.alreadyClosedStream(Variable receiver,
-      CfgMethodCall call) {
-    cfg().initPredecessors(); // Ensure predecessor lists are populated.
-    Set<CfgNode> visited = Collections.newSetFromMap(
-        new IdentityHashMap<CfgNode, Boolean>());
-    Queue<CfgNode> work = new LinkedList<CfgNode>();
-    work.add(call);
-    visited.add(call);
-    while (!work.isEmpty()) {
-      CfgNode node = work.poll();
-      for (CfgNode pred : node.predecessors) {
-        if (!visited.contains(pred)) {
-          if (isCloseCall(receiver, pred)) {
-            return true;
-          }
-          visited.add(pred);
-          if (!isAlreadyAnalyzed(receiver, pred)) {
-            work.add(pred);
-          }
-        }
-      }
+  syn boolean MethodAccess.alreadyClosedStream() {
+    // The receiver must be an effectively final local variable (or parameter).
+    if (name().equals("close") // Don't check for repeated close() calls.
+        || !hasPrevExpr()
+        || prevExpr().varDecl() == null
+        || !(prevExpr().varDecl().isFinal() || prevExpr().varDecl().isEffectivelyFinal())
+        || !prevExpr().type().isWriterOrReader()) {
+      return false;
     }
-    return false;
+    final Variable receiver = prevExpr().varDecl();
+    return null != call().reverseBfs(new CfgVisitor() {
+      @Override
+      public SearchAction processEdge(CfgNode pred, CfgNode succ) {
+        if (succ.isCloseCall(receiver)) {
+          return SearchAction.SUCCESSOR_MATCH;
+        }
+        if (succ.isCall() && succ.isCall(receiver)) {
+          return SearchAction.SKIP;
+        }
+        return SearchAction.CONTINUE;
+      }
+    });
   }
+
+  /** Test if the CFG node is a call node with the given variable as receiver. */
+  syn boolean CfgNode.isCall(Variable receiver) = false;
+  eq CfgMethodCall.isCall(Variable receiver) = methodAccess().hasReceiver(receiver);
 
   /** Test if the CFG node is a call node for receiver.close(). */
-  private boolean VarAccess.isCloseCall(Variable receiver, CfgNode node) {
-    if (node.isCall()) {
-      CfgMethodCall call = (CfgMethodCall) node;
-      return call.methodAccess().hasReceiver(receiver)
-        && call.methodAccess().getID().equals("close");
-    }
-    return false;
-  }
-
-  /** Test if the CFG node is a call on the same receiver object. */
-  private boolean VarAccess.isAlreadyAnalyzed(Variable receiver, CfgNode node) {
-    return node.isCall() && receiver == decl();
-  }
+  syn boolean CfgNode.isCloseCall(Variable receiver) = false;
+  eq CfgMethodCall.isCloseCall(Variable receiver) =
+      methodAccess().hasReceiver(receiver) && methodAccess().getID().equals("close");
 
   /** Check if this is a Reader or Writer.  */
   syn boolean TypeDecl.isWriterOrReader() =
