@@ -43,10 +43,11 @@ aspect CloseAnalysis {
   syn boolean MethodAccess.alreadyClosedStream() {
     // The receiver must be an effectively final local variable (or parameter).
     if (name().equals("close") // Don't check for repeated close() calls.
-        || !hasPrevExpr()
-        || prevExpr().varDecl() == null
-        || !(prevExpr().varDecl().isFinal() || prevExpr().varDecl().isEffectivelyFinal())
-        || !prevExpr().type().isWriterOrReader()) {
+        || !hasPrevExpr() // Does not have a variable or parameter receiver.
+        || prevExpr().varDecl() == null // Receiver is not a variable/parameter.
+        || !(prevExpr().varDecl().isFinal()
+          || prevExpr().varDecl().isEffectivelyFinal()) // Receiver might have changed.
+        || !prevExpr().type().isWriterOrReader()) { // Receiver is not Reader/Writer.
       return false;
     }
     final Variable receiver = prevExpr().varDecl();
