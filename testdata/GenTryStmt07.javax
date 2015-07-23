@@ -21,10 +21,10 @@ class GenTryStmt07 {
   {
     try {
       x();
-    } catch (Throwable _) {
+    } catch (Throwable unused) {
       c1();
       return;
-    } catch (Exception _) {
+    } catch (Exception unused) {
       // Never reached.
       c2();
     } finally {

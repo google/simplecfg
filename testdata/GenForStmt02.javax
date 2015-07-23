@@ -21,7 +21,7 @@ class GenForStmt02 {
   {
     // Test a labeled continue.
     loop1:
-    for (int i = 3*x; i < 100; ++i, u()) {
+    for (int i = 3 * x; i < 100; ++i, u()) {
       while (c()) {
         if (i >= 40) {
           continue loop1;

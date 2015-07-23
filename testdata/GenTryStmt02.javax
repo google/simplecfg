@@ -21,9 +21,9 @@ class GenTryStmt02 {
   {
     try {
       tryBlock();
-    } catch (Exception _) {
+    } catch (Exception unused) {
       c1();
-    } catch (Throwable _) {
+    } catch (Throwable unused) {
       c2();
     }
   }

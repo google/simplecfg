@@ -37,8 +37,7 @@ aspect PrintCfg {
   }
 
   public void CfgNode.printReverseCfg() {
-    Set<CfgNode> visited = Collections.newSetFromMap(
-        new IdentityHashMap<CfgNode, Boolean>());
+    Set<CfgNode> visited = Collections.newSetFromMap(new IdentityHashMap<CfgNode, Boolean>());
     Queue<CfgNode> queue = new LinkedList<CfgNode>();
 
     // Enqueue this node.
@@ -68,8 +67,7 @@ aspect PrintCfg {
   }
 
   public void CfgNode.printCfg() {
-    Set<CfgNode> visited = Collections.newSetFromMap(
-        new IdentityHashMap<CfgNode, Boolean>());
+    Set<CfgNode> visited = Collections.newSetFromMap(new IdentityHashMap<CfgNode, Boolean>());
     Queue<CfgNode> queue = new LinkedList<CfgNode>();
 
     // Enqueue this node.

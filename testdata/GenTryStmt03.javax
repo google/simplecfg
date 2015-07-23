@@ -21,9 +21,9 @@ class GenTryStmt03 {
   {
     try {
       x();
-    } catch (Throwable _) {
+    } catch (Throwable unused) {
       c1();
-    } catch (Exception _) {
+    } catch (Exception unused) {
       // Never reached.
       c2();
     } finally {

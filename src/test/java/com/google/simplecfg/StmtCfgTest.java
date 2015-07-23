@@ -87,7 +87,6 @@ public class StmtCfgTest {
     assertThat(cfgNames(node.successors())).containsExactly((Object[]) successors);
 
     // Ensure no duplicate successor names.
-    boolean duplicates = false;
     Set<String> dups = new HashSet<String>();
     for (String succ : successors) {
       if (dups.contains(succ)) {

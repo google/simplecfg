@@ -20,6 +20,6 @@
 class ConditionalExpr01 {
   static {
     // Conditional expressions work like if statements.
-    int _ = x() ? y() : z();
+    int unused = x() ? y() : z();
   }
 }

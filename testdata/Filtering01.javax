@@ -22,7 +22,7 @@ class Filtering01 {
     // Test that uninteresting expressions are not included in the CFG.
     int a = 4;
     int b = 3;
-    for (int i = i(1, 4*5), j = j(); cond() && c == 3; u1(), j += c/2, u2(), u3(), i++) {
+    for (int i = i(1, 4 * 5), j = j(); cond() && c == 3; u1(), j += c / 2, u2(), u3(), i++) {
       stmt();
       a += (--b) * c;
     }

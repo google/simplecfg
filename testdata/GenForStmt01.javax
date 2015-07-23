@@ -21,7 +21,7 @@ class GenForStmt01 {
   {
     // Test a labeled break.
     loop1:
-    for (int i = 3*x; i < 100; ++i, u()) {
+    for (int i = 3 * x; i < 100; ++i, u()) {
       while (c()) {
         if (i >= 40) {
           break loop1;
