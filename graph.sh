@@ -20,13 +20,13 @@ gradle jar
 
 gengraph()
 {
-    OUT="${1%%\.java}.png"
+    OUT="${1%%\.javax}.png"
     echo "$1 -> $OUT"
     java -jar simplecfg.jar "$1" | dot -Tpng > "$OUT"
 }
 
 if [ $# -lt "1" ]; then
-  for f in testdata/*.java; do
+  for f in testdata/*.javax; do
     gengraph $f
   done
 else

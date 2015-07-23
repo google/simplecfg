@@ -40,7 +40,7 @@ public class CloseCheckTest {
 
   /** Helper to get the findings for a given file. */
   private static Collection<String> findings(String filename) {
-    String path = "testdata/" + filename + ".java";
+    String path = "testdata/" + filename + ".javax";
     try {
       JavaParser parser = new JavaParser() {
         @Override

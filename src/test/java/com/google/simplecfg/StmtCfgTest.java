@@ -43,7 +43,7 @@ import java.util.Set;
 public class StmtCfgTest {
 
   private static CfgNode parseFile(String filename) {
-    String path = "testdata/" + filename + ".java";
+    String path = "testdata/" + filename + ".javax";
     try {
       JavaParser parser = new JavaParser() {
         @Override
