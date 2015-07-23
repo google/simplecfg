@@ -31,7 +31,7 @@ aspect PrintCfg {
 
   public void BodyDecl.printReverseCfg() {
     entry().initPredecessors();
-    System.out.println("digraph " + graphname() + " {");
+    System.out.println("digraph " + graphName() + " {");
     exit().printReverseCfg();
     System.out.println("}");
   }
@@ -62,7 +62,7 @@ aspect PrintCfg {
   }
 
   public void BodyDecl.printCfg() {
-    System.out.println("digraph " + graphname() + " {");
+    System.out.println("digraph " + graphName() + " {");
     entry().printCfg();
     System.out.println("}");
   }
@@ -92,8 +92,8 @@ aspect PrintCfg {
     }
   }
 
-  syn String BodyDecl.graphname() = "";
-  eq MethodDecl.graphname() = name();
+  syn String BodyDecl.graphName() = "";
+  eq MethodDecl.graphName() = name();
 
   /**
    * The ID for this node in a dot graph.
