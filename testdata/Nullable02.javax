@@ -1,0 +1,7 @@
+import javax.annotation.Nullable;
+class Nullable02 {
+  void f(@Nullable Test p) {
+    if (p == null) return;
+    p.x = true; // negative
+  }
+}

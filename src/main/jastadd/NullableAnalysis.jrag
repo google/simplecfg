@@ -1,0 +1,129 @@
+
+aspect NullableAnalysis {
+  refine CloseAnalysis
+  protected void Program.initializeLibraryTypes(Map<String, TypeDecl> libs) {
+    refined(libs);
+
+    // Inspected types.
+    addPlaceholderType(libs, "javax.annotation", "Nullable");
+  }
+
+  AbstractDot contributes nullableDereferenceFinding()
+      when isNullableDereference()
+      to CompilationUnit.findings()
+      for compilationUnit();
+
+  syn String AbstractDot.nullableDereferenceFinding() =
+      finding("Using a nullable parameter without a != null guard!");
+
+  inh CompilationUnit AbstractDot.compilationUnit();
+
+  syn lazy boolean AbstractDot.isNullableDereference() =
+      getLeft().nullableParameter()
+      && !getLeft().hasNullGuard(getLeft().varDecl())
+      && !hasNonEnclosingNullGuard();
+
+  syn nta CfgMarker AbstractDot.nullableDereferenceMarker() = new CfgMarker();
+  refine SimpleCFG
+  eq AbstractDot.getLeft().follow() =
+      !getRight().isMethodAccess() && getLeft().nullableParameter()
+      ? nullableDereferenceMarker()
+      : getRight().entry();
+
+  eq AbstractDot.nullableDereferenceMarker().markerName() = "nullable access";
+  eq AbstractDot.nullableDereferenceMarker().markerVarName() = "nullable";
+  eq AbstractDot.nullableDereferenceMarker().succ() = Collections.singleton(getRight().entry());
+
+  /**
+   * This checks if there is a null guard that is not in an enclosing if condition.
+   * The check is performed using the simple CFG by finding the next CFG node following this
+   * expression and then checking each path in the reverse CFG to see if all paths are null
+   * guarded.
+   */
+  syn boolean AbstractDot.hasNonEnclosingNullGuard() {
+    final Variable var = getLeft().varDecl();
+    return null == getLeft().follow().reverseBfs(new CfgVisitor() {
+      @Override public SearchAction processEdge(CfgNode pred, CfgNode succ) {
+        if (succ instanceof CfgEntry) {
+          return SearchAction.SUCCESSOR_MATCH;
+        }
+        if (succ.isNullGuard(var, pred)) {
+          return SearchAction.SKIP;
+        }
+        return SearchAction.CONTINUE;
+      }
+    });
+  }
+
+  syn boolean CfgNode.isNullGuard(Variable var, CfgNode succ) = false;
+
+  eq CfgBranch.isNullGuard(Variable var, CfgNode succ) = inhNullGuard(var, succ);
+
+  inh boolean CfgBranch.inhNullGuard(Variable var, CfgNode succ);
+
+  eq IfStmt.branch().inhNullGuard(Variable var, CfgNode succ) =
+      succ == getThen().entry()
+      ? getCondition().isNonNullTest(var)
+      : getCondition().isNullTest(var);
+
+  eq ConditionalExpr.branch().inhNullGuard(Variable var, CfgNode succ) =
+      succ == getTrueExpr().entry()
+      ? getCondition().isNonNullTest(var)
+      : getCondition().isNullTest(var);
+
+  eq ForStmt.branch().inhNullGuard(Variable var, CfgNode succ) = false;
+  eq EnhancedForStmt.branch().inhNullGuard(Variable var, CfgNode succ) = false;
+  eq WhileStmt.branch().inhNullGuard(Variable var, CfgNode succ) = false;
+  eq DoStmt.branch().inhNullGuard(Variable var, CfgNode succ) = false;
+  eq SwitchStmt.branch().inhNullGuard(Variable var, CfgNode succ) = false;
+
+  /** Test if this expression refers to a parameter declared as nullable. */
+  syn boolean Expr.nullableParameter() = varDecl() != null && varDecl().nullableParameter();
+
+  /** Test if this variable is a parameter declared as nullable. */
+  syn boolean Variable.nullableParameter() =
+      isParameter()
+      && (isFinal() || isEffectivelyFinal())
+      && declaredNullable();
+
+  /** Test if this variable is declared {@code @Nullable} */
+  syn boolean Variable.declaredNullable();
+  eq FieldDeclaration.declaredNullable() = false;
+  eq VariableDeclaration.declaredNullable() = false;
+  eq InferredParameterDeclaration.declaredNullable() = false;
+  eq ParameterDeclaration.declaredNullable() = getModifiers().hasNullableAnnotation();
+  eq CatchParameterDeclaration.declaredNullable() = getModifiers().hasNullableAnnotation();
+
+  syn boolean Modifiers.hasNullableAnnotation() = hasAnnotation("javax.annotation", "Nullable");
+
+  /** Return {@code true} if this expression is guarded by a != null check for var.  */
+  inh boolean Expr.hasNullGuard(Variable var);
+  eq Program.getChild().hasNullGuard(Variable var) = false;
+  eq IfStmt.getThen().hasNullGuard(Variable var) = getCondition().isNonNullTest(var);
+  eq IfStmt.getElse().hasNullGuard(Variable var) = getCondition().isNullTest(var);
+  eq WhileStmt.getStmt().hasNullGuard(Variable var) = getCondition().isNonNullTest(var);
+  eq ForStmt.getStmt().hasNullGuard(Variable var) = getCondition().isNonNullTest(var);
+  eq ConditionalExpr.getTrueExpr().hasNullGuard(Variable var) = getCondition().isNonNullTest(var);
+  eq ConditionalExpr.getFalseExpr().hasNullGuard(Variable var) = getCondition().isNullTest(var);
+  eq AndLogicalExpr.getRightOperand().hasNullGuard(Variable var) =
+      getLeftOperand().isNonNullTest(var);
+  eq OrLogicalExpr.getRightOperand().hasNullGuard(Variable var) =
+      getLeftOperand().isNullTest(var);
+
+  syn boolean Expr.isNullTest(Variable var) = false;
+  eq EQExpr.isNullTest(Variable var) =
+      getLeftOperand().isNull() && getRightOperand().varDecl() == var
+      || getRightOperand().isNull() && getLeftOperand().varDecl() == var;
+  eq LogNotExpr.isNullTest(Variable var) = getOperand().isNonNullTest(var);
+  eq ParExpr.isNullTest(Variable var) = getExpr().isNullTest(var);
+
+  syn boolean Expr.isNonNullTest(Variable var) = false;
+  eq NEExpr.isNonNullTest(Variable var) =
+      getLeftOperand().isNull() && getRightOperand().varDecl() == var
+      || getRightOperand().isNull() && getLeftOperand().varDecl() == var;
+  eq LogNotExpr.isNonNullTest(Variable var) = getOperand().isNullTest(var);
+  eq ParExpr.isNonNullTest(Variable var) = getExpr().isNonNullTest(var);
+
+  syn boolean Expr.isNull() = type().isNull();
+  eq NullLiteral.isNull() = true;
+}

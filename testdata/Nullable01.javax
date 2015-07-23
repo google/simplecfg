@@ -1,0 +1,45 @@
+import javax.annotation.Nullable;
+
+public class Test {
+  boolean x = false;
+  void f1(@Nullable Test p) {
+    if (p != null) {
+      p.f1(p); // negative
+    }
+  }
+  boolean f2(@Nullable Test p) {
+    return p == null || p.f1(p); // negative
+  }
+  boolean f3(@Nullable Test p) {
+    return p == null ? false : p.f1(p); // negative
+  }
+  boolean f4(@Nullable Test p) {
+    return p != null ? p.f1(p) : false; // negative
+  }
+  boolean f5(@Nullable Test p) {
+    return p != null || p.f1(p); // positive
+  }
+  boolean f5(@Nullable Test p) {
+    p = null;
+    return p.x; // negative
+  }
+  boolean f5(@Nullable Test p) {
+    return p.x; // positive
+  }
+  void f6(@Nullable Test p) {
+    if (p == null) return;
+    p.x = true; // negative
+  }
+  void f6(@Nullable Test p) {
+    while (true) {
+      if (p == null) break;
+      p.x = true; // negative
+    }
+  }
+  void f6(@Nullable Test p) {
+    while (p.x) { // positive
+      if (p == null) continue;
+      p.x = false; // negative
+    }
+  }
+}

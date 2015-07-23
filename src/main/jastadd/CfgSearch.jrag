@@ -32,11 +32,12 @@ aspect CfgSearch {
      */
     SKIP,
     /**
-     * The search continues as normal, adding successors from the successor of the current edge.
+     * The search continues as normal, adding successors from the target of the current edge.
      */
     CONTINUE,
     /**
-     * The search does not process additional edges to the current successor.
+     * The search does not process additional edges to the target of the current edge, and the
+     * successors of the target node are not added to the work queue.
      */
     IGNORE
   }
