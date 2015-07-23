@@ -32,8 +32,5 @@ CfgBranch : CfgNode;
 /** A branch in the CFG caused by potential thrown exceptions.  */
 CfgException : CfgNode;
 
-/**
- * The entry of a try statement has a branch to the block and to each
- * catch clause or finally block.
- */
-CfgTryEntry : CfgNode;
+/** A marker node used to mark try block entry points or the end of if-statement branches.  */
+CfgMarker : CfgNode;

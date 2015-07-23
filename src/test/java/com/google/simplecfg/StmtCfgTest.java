@@ -109,7 +109,7 @@ public class StmtCfgTest {
   }
 
   /** Convert a collection of CfgNodes to a collection of of the node names.  */
-  private static Iterable<String> cfgNames(Iterable<? extends CfgNode> cfgs) {
+  private static Collection<String> cfgNames(Iterable<? extends CfgNode> cfgs) {
     // Use a linked list because we need to preserve duplicate names.
     // TODO(joqvist): Use Java 8 stream api to map CfgNode -> String.
     Collection<String> names = new LinkedList<>();
@@ -124,7 +124,8 @@ public class StmtCfgTest {
     CfgNode call1 = succ(entry, "call1()");
     CfgNode branch = succ(call1, "if (call1())");
     CfgNode[] targets = succ(branch, "onTrue()", "exit");
-    assertThat(succ(targets[0], "exit")).isSameAs(targets[1]);
+    CfgNode thenEnd = succ(targets[0], "then-end");
+    assertThat(succ(thenEnd, "exit")).isSameAs(targets[1]);
   }
 
   @Test public void ifStmt02() {
@@ -132,7 +133,9 @@ public class StmtCfgTest {
     CfgNode call1 = succ(entry, "call1()");
     CfgNode branch = succ(call1, "if (call1())");
     CfgNode[] targets = succ(branch, "onTrue()", "onFalse()");
-    assertThat(succ(targets[0], "exit")).isSameAs(succ(targets[1], "exit"));
+    CfgNode thenEnd = succ(targets[0], "then-end");
+    CfgNode elseEnd = succ(targets[1], "else-end");
+    assertThat(succ(thenEnd, "exit")).isSameAs(succ(elseEnd, "exit"));
   }
 
   @Test public void ifStmt03() {
@@ -140,7 +143,7 @@ public class StmtCfgTest {
     CfgNode call1 = succ(entry, "call1()");
     CfgNode branch = succ(call1, "if (call1())");
     CfgNode[] targets = succ(branch, "onTrue()", "onFalse()");
-    succ(targets[0], "exit");
+    succ(succ(targets[0], "then-end"), "exit");
     succ(targets[1], "call2()");
   }
 
@@ -150,7 +153,7 @@ public class StmtCfgTest {
     CfgNode branch = succ(call1, "if (call1())");
     CfgNode[] targets = succ(branch, "onTrue()", "onFalse()");
     succ(targets[0], "call2()");
-    succ(targets[1], "exit");
+    succ(succ(targets[1], "else-end"), "exit");
   }
 
   @Test public void forStmt01() {
@@ -284,8 +287,10 @@ public class StmtCfgTest {
     CfgNode x = succ(entry, "x()");
     CfgNode branch = succ(x, "if (x())");
     CfgNode[] targets = succ(branch, "y()", "z()");
-    // If branches converge on exit.
-    assertThat(succ(targets[0], "exit")).isSameAs(succ(targets[1], "exit"));
+    CfgNode thenEnd = succ(targets[0], "then-end");
+    CfgNode elseEnd = succ(targets[1], "else-end");
+    // Assert that the branches converge on exit.
+    assertThat(succ(thenEnd, "exit")).isSameAs(succ(elseEnd, "exit"));
   }
 
   @Test public void switchStmt01() {

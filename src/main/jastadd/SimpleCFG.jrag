@@ -49,7 +49,7 @@ aspect SimpleCFG {
 
   eq CfgException.successors() = succ();
 
-  eq CfgTryEntry.successors() = succ();
+  eq CfgMarker.successors() = succ();
 
   /**
    * Set that contains either one or two unique objects. The objects are
@@ -159,7 +159,7 @@ aspect SimpleCFG {
 
   inh Set<? extends CfgNode> CfgException.succ();
 
-  inh Set<? extends CfgNode> CfgTryEntry.succ();
+  inh Set<? extends CfgNode> CfgMarker.succ();
 
   /** Build a small set with two elements. */
   public <T> Set<T> ASTNode.smallSet(T a, T b) {
@@ -238,7 +238,7 @@ aspect SimpleCFG {
 
   // Note: catch-all clauses get special treatment!
 
-  eq TryStmt.entry() = tryEntryNode();
+  eq TryStmt.entry() = tryEntryMarker();
 
   eq TryWithResources.entry() =
       getNumResource() > 0
@@ -250,9 +250,13 @@ aspect SimpleCFG {
       ? getResource(index+1).entry()
       : super.entry();
 
-  syn nta CfgTryEntry TryStmt.tryEntryNode() = new CfgTryEntry();
+  /**
+   * The entry of a try statement has a branch to the block and to each
+   * catch clause or finally block.
+   */
+  syn nta CfgMarker TryStmt.tryEntryMarker() = new CfgMarker();
 
-  eq TryStmt.tryEntryNode().succ() =
+  eq TryStmt.tryEntryMarker().succ() =
       joinSets(Collections.singleton(getBlock().entry()), catchBranches());
 
   eq MethodAccess.exceptionNode().succ() = exceptionBranches();
@@ -491,9 +495,9 @@ aspect SimpleCFG {
   eq Literal.entry() = follow();
 
   eq ArrayCreationExpr.entry() =
-    hasArrayInit()
-    ? getArrayInit().entry()
-    : follow();
+      hasArrayInit()
+      ? getArrayInit().entry()
+      : follow();
 
   eq Binary.entry() = getLeftOperand().entry();
   eq Binary.getLeftOperand().follow() = getRightOperand().entry();
@@ -504,20 +508,48 @@ aspect SimpleCFG {
   /** The branch node for this conditional expression. */
   syn nta CfgBranch ConditionalExpr.branch() = new CfgBranch();
 
+  /**
+   * The then-end node is a marker node marking the end of a then-branch in a conditional
+   * expression.
+   */
+  syn nta CfgMarker ConditionalExpr.thenEndMarker() = new CfgMarker();
+
+  /**
+   * The else-end node is a marker node marking the end of a else-branch in a conditional
+   * expression.
+   */
+  syn nta CfgMarker ConditionalExpr.elseEndMarker() = new CfgMarker();
+
   eq ConditionalExpr.entry() = getCondition().entry();
   eq ConditionalExpr.getCondition().follow() = branch();
+  eq ConditionalExpr.getTrueExpr().follow() = thenEndMarker();
+  eq ConditionalExpr.getFalseExpr().follow() = elseEndMarker();
+  eq ConditionalExpr.thenEndMarker().follow() = follow();
+  eq ConditionalExpr.elseEndMarker().follow() = follow();
+  eq ConditionalExpr.thenEndMarker().succ() = Collections.singleton(follow());
+  eq ConditionalExpr.elseEndMarker().succ() = Collections.singleton(follow());
 
   eq ConditionalExpr.branch().succ() =
-    smallSet(getTrueExpr().entry(), getFalseExpr().entry());
+      smallSet(getTrueExpr().entry(), getFalseExpr().entry());
 
   /** The branch node for this statement. */
   syn nta CfgBranch IfStmt.branch() = new CfgBranch();
 
+  /** The then-end node is a marker node marking the end of a then-branch in an if statement.  */
+  syn nta CfgMarker IfStmt.thenEndMarker() = new CfgMarker();
+
+  /** The else-end node is a marker node marking the end of a else-branch in an if statement.  */
+  syn nta CfgMarker IfStmt.elseEndMarker() = new CfgMarker();
+
   eq IfStmt.entry() = getCondition().entry();
 
   eq IfStmt.getCondition().follow() = branch();
-  eq IfStmt.getThen().follow() = follow();
-  eq IfStmt.getElse().follow() = follow();
+  eq IfStmt.getThen().follow() = thenEndMarker();
+  eq IfStmt.getElse().follow() = elseEndMarker();
+  eq IfStmt.thenEndMarker().follow() = follow();
+  eq IfStmt.elseEndMarker().follow() = follow();
+  eq IfStmt.thenEndMarker().succ() = Collections.singleton(follow());
+  eq IfStmt.elseEndMarker().succ() = Collections.singleton(follow());
 
   eq IfStmt.branch().succ() =
       hasElse()

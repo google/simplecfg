@@ -104,21 +104,20 @@ aspect PrintCfg {
   syn String CfgNode.dotAttributes() = " [label=\"" + name() + "\"]";
   eq CfgBranch.dotAttributes() = " [label=\"" + name() + "\",shape=diamond]";
   eq CfgException.dotAttributes() = " [label=\"" + name() + "\",shape=box]";
-  eq CfgTryEntry.dotAttributes() = " [label=\"" + name() + "\",shape=box]";
-
-  inh String CfgMethodCall.callLabel();
-  inh String CfgBranch.branchLabel();
+  eq CfgMarker.dotAttributes() = " [label=\"" + name() + "\",shape=box]";
 
   syn String CfgNode.name();
+  eq CfgBranch.name() = branchLabel();
   eq CfgEntry.name() = "entry";
   eq CfgExit.name() = "exit";
-  eq CfgMethodCall.name() = callLabel();
-  eq CfgBranch.name() = branchLabel();
   eq CfgException.name() = "exception";
-  eq CfgTryEntry.name() = "try";
+  eq CfgMarker.name() = markerName();
+  eq CfgMethodCall.name() = callLabel();
 
+  inh String CfgMethodCall.callLabel();
   eq MethodAccess.call().callLabel() = name() + "()";
 
+  inh String CfgBranch.branchLabel();
   eq IfStmt.branch().branchLabel() = "if (" + getCondition().prettyPrint() + ")";
   eq ConditionalExpr.branch().branchLabel() = "if (" + getCondition().prettyPrint() + ")";
   eq ForStmt.branch().branchLabel() = "for (" + getCondition().prettyPrint() + ")";
@@ -129,4 +128,11 @@ aspect PrintCfg {
       getVariableDeclaration().getID(),
       getExpr().prettyPrint());
   eq SwitchStmt.branch().branchLabel() = "switch (" + getExpr().prettyPrint() + ")";
+
+  inh String CfgMarker.markerName();
+  eq ConditionalExpr.thenEndMarker().markerName() = "then-end";
+  eq ConditionalExpr.elseEndMarker().markerName() = "else-end";
+  eq IfStmt.thenEndMarker().markerName() = "then-end";
+  eq IfStmt.elseEndMarker().markerName() = "else-end";
+  eq TryStmt.tryEntryMarker().markerName() = "try";
 }

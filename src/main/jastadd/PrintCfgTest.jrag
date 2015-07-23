@@ -149,7 +149,7 @@ aspect PrintCfgTest {
   syn String CfgNode.varName() = name();
   eq CfgBranch.varName() = branchKind() + "Branch";
   eq CfgException.varName() = "exception";
-  eq CfgTryEntry.varName() = "tryEntry";
+  eq CfgMarker.varName() = markerVarName();
   eq CfgMethodCall.varName() = methodAccess().getID();
 
   inh String CfgBranch.branchKind();
@@ -160,4 +160,11 @@ aspect PrintCfgTest {
   eq DoStmt.branch().branchKind() = "doWhile";
   eq EnhancedForStmt.branch().branchKind() = "for";
   eq SwitchStmt.branch().branchKind() = "switch";
+
+  inh String CfgMarker.markerVarName();
+  eq ConditionalExpr.thenEndMarker().markerVarName() = "then-end";
+  eq ConditionalExpr.elseEndMarker().markerVarName() = "else-end";
+  eq IfStmt.thenEndMarker().markerVarName() = "thenEnd";
+  eq IfStmt.elseEndMarker().markerVarName() = "elseEnd";
+  eq TryStmt.tryEntryMarker().markerVarName() = "tryEntry";
 }
