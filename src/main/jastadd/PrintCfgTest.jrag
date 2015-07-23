@@ -162,9 +162,13 @@ aspect PrintCfgTest {
   eq SwitchStmt.branch().branchKind() = "switch";
 
   inh String CfgMarker.markerVarName();
-  eq ConditionalExpr.thenEndMarker().markerVarName() = "then-end";
-  eq ConditionalExpr.elseEndMarker().markerVarName() = "else-end";
+  eq BreakStmt.marker().markerVarName() = "breakMarker";
+  eq ContinueStmt.marker().markerVarName() = "continueMarker";
+  eq ConditionalExpr.thenEndMarker().markerVarName() = "thenEnd";
+  eq ConditionalExpr.elseEndMarker().markerVarName() = "elseEnd";
   eq IfStmt.thenEndMarker().markerVarName() = "thenEnd";
   eq IfStmt.elseEndMarker().markerVarName() = "elseEnd";
+  eq ReturnStmt.marker().markerVarName() = "returnMarker";
   eq TryStmt.tryEntryMarker().markerVarName() = "tryEntry";
+  eq Program.getChild().markerVarName() = "marker";
 }

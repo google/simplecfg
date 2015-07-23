@@ -21,7 +21,9 @@ if [ $# -lt "1" ]; then
   exit 1
 else
   gradle jar
-  java -cp simplecfg.jar com.google.simplecfg.TestGenerator $1
+  for src in "$@"; do
+    java -cp simplecfg.jar com.google.simplecfg.TestGenerator "$src"
+  done
 fi
 
 echo "done"

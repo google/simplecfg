@@ -330,21 +330,45 @@ aspect SimpleCFG {
       ? getFinally().entry()
       : follow();
 
-  eq BreakStmt.entry() =
+  /** The CFG marker for this break statement.  */
+  syn nta CfgMarker BreakStmt.marker() = new CfgMarker();
+
+  eq BreakStmt.entry() = marker();
+  eq BreakStmt.marker().succ() =
+      hasFinally()
+      ? Collections.singleton(getFinally().entry())
+      : Collections.singleton(targetStmt().follow());
+  eq BreakStmt.marker().follow() =
       hasFinally()
       ? getFinally().entry()
       : targetStmt().follow();
 
   eq BreakStmt.getFinally().follow() = targetStmt().follow();
 
-  eq ContinueStmt.entry() =
+  /** The CFG marker for this continue statement.  */
+  syn nta CfgMarker ContinueStmt.marker() = new CfgMarker();
+
+  eq ContinueStmt.entry() = marker();
+  eq ContinueStmt.marker().succ() =
+      hasFinally()
+      ? Collections.singleton(getFinally().entry())
+      : Collections.singleton(targetStmt().entry());
+  eq ContinueStmt.marker().follow() =
       hasFinally()
       ? getFinally().entry()
       : targetStmt().entry();
 
   eq ContinueStmt.getFinally().follow() = targetStmt().follow();
 
-  eq ReturnStmt.entry() =
+  /** The CFG marker for this continue statement.  */
+  syn nta CfgMarker ReturnStmt.marker() = new CfgMarker();
+
+  eq ReturnStmt.entry() = marker();
+  eq ReturnStmt.marker().succ() =
+      hasResult()
+      ? Collections.singleton(getResult().entry())
+      : Collections.singleton(returnTarget());
+  eq ReturnStmt.marker().follow() =
       hasResult()
       ? getResult().entry()
       : returnTarget();
@@ -477,6 +501,7 @@ aspect SimpleCFG {
 
   /** @return {@code true} if this statement is inside a try block. */
   inh boolean MethodAccess.isInsideTryBlockOrResource();
+  inh boolean Stmt.isInsideTryBlockOrResource();
 
   eq CompilationUnit.getChild().isInsideTryBlockOrResource() = false;
   eq TypeDecl.getChild().isInsideTryBlockOrResource() = false;
@@ -484,7 +509,9 @@ aspect SimpleCFG {
   eq LambdaBody.getChild().isInsideTryBlockOrResource() = false;
   eq TryStmt.getBlock().isInsideTryBlockOrResource() = true;
   eq TryWithResources.getResource().isInsideTryBlockOrResource() = true;
-  eq NTAFinallyBlock.getChild().isInsideTryBlockOrResource() = false;
+  eq NTAFinallyBlock.getChild().isInsideTryBlockOrResource() =
+      origin.getFinallyBlock().isInsideTryBlockOrResource();
+  eq Program.getChild().isInsideTryBlockOrResource() = false;
 
   eq InstanceOfExpr.entry() = getExpr().entry();
 

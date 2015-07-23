@@ -130,9 +130,13 @@ aspect PrintCfg {
   eq SwitchStmt.branch().branchLabel() = "switch (" + getExpr().prettyPrint() + ")";
 
   inh String CfgMarker.markerName();
+  eq BreakStmt.marker().markerName() = "break";
+  eq ContinueStmt.marker().markerName() = "continue";
   eq ConditionalExpr.thenEndMarker().markerName() = "then-end";
   eq ConditionalExpr.elseEndMarker().markerName() = "else-end";
   eq IfStmt.thenEndMarker().markerName() = "then-end";
   eq IfStmt.elseEndMarker().markerName() = "else-end";
+  eq ReturnStmt.marker().markerName() = "return";
   eq TryStmt.tryEntryMarker().markerName() = "try";
+  eq Program.getChild().markerName() = "marker";
 }

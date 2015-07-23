@@ -24,6 +24,7 @@ class GenTryStmt05 {
         if (condition) throw exception;
       } finally {
         f1();
+        return;
       }
       a();
     } finally {

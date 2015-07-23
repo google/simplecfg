@@ -221,22 +221,22 @@ public class StmtCfgTest {
 
   @Test public void whileStmt03() {
     CfgNode entry = parseFile("WhileStmt03");
-    CfgNode branch = succ(entry, "while (true)");
-    CfgNode cond = succ(branch, "cond()");
-    CfgNode branch2 = succ(cond, "if (cond())");
-    CfgNode[] targets = succ(branch2, "while (true)", "tail()");
-    assertThat(targets[0]).isSameAs(branch);
-    succ(targets[1], "exit");
+    CfgNode whileBranch = succ(entry, "while (true)");
+    CfgNode cond = succ(whileBranch, "cond()");
+    CfgNode ifBranch = succ(cond, "if (cond())");
+    CfgNode[] whileSucc = succ(ifBranch, "while (true)", "break");
+    assertThat(whileSucc[0]).isSameAs(whileBranch);
+    succ(succ(whileSucc[1], "tail()"), "exit");
   }
 
   @Test public void whileStmt04() {
     CfgNode entry = parseFile("WhileStmt04");
-    CfgNode branch = succ(entry, "while (true)");
-    CfgNode cond = succ(branch, "cond()");
-    CfgNode branch2 = succ(cond, "if (cond())");
-    CfgNode[] targets = succ(branch2, "while (true)", "x()");
-    assertThat(targets[0]).isSameAs(branch);
-    CfgNode y = succ(targets[1], "y()");
+    CfgNode whileBranch = succ(entry, "while (true)");
+    CfgNode cond = succ(whileBranch, "cond()");
+    CfgNode ifBranch = succ(cond, "if (cond())");
+    CfgNode[] ifSucc = succ(ifBranch, "continue", "x()");
+    assertThat(succ(ifSucc[0], "while (true)")).isSameAs(whileBranch);
+    CfgNode y = succ(succ(ifSucc[1], "break"), "y()");
     succ(y, "exit");
   }
 
@@ -299,7 +299,7 @@ public class StmtCfgTest {
     CfgNode branch = succ(expr, "switch (expr())");
     CfgNode[] targets = succ(branch, "x()", "y()", "z()", "d()");
     assertThat(succ(targets[0], "y()")).isSameAs(targets[1]);
-    CfgNode exit = succ(targets[1], "exit");
+    CfgNode exit = succ(succ(targets[1], "break"), "exit");
     assertThat(succ(targets[2], "d()")).isSameAs(targets[3]);
     assertThat(succ(targets[3], "exit")).isSameAs(exit);
   }
@@ -310,7 +310,7 @@ public class StmtCfgTest {
     CfgNode branch = succ(expr, "switch (expr())");
     CfgNode[] targets = succ(branch, "x()", "y()", "z()", "exit");
     assertThat(succ(targets[0], "y()")).isSameAs(targets[1]);
-    assertThat(succ(targets[1], "exit")).isSameAs(targets[3]);
+    assertThat(succ(succ(targets[1], "break"), "exit")).isSameAs(targets[3]);
     assertThat(succ(targets[2], "exit")).isSameAs(targets[3]);
   }
 
@@ -322,12 +322,14 @@ public class StmtCfgTest {
     CfgNode x = succ(condSucc[0], "x()");
     assertThat(x).isSameAs(trySucc[1]);
     CfgNode exit = succ(succ(x, "exception"), "exit");
-    CfgNode[] ifSucc = succ(condSucc[1], "a()", "x()");
+    CfgNode[] ifSucc = succ(condSucc[1], "a()", "return");
     CfgNode[] aSucc = succ(ifSucc[0], "exception", "x()");
     assertThat(succ(aSucc[0], "x()")).isSameAs(x);
     assertThat(aSucc[1]).isNotSameAs(x);
     assertThat(succ(succ(aSucc[1], "y()"), "exit")).isSameAs(exit);
-    assertThat(succ(ifSucc[1], "exit")).isSameAs(exit);
+    CfgNode x2 = succ(ifSucc[1], "x()");
+    assertThat(x2).isNotSameAs(x);
+    assertThat(succ(x2, "exit")).isSameAs(exit);
   }
 
   @Test public void tryStmt02() {
@@ -342,25 +344,13 @@ public class StmtCfgTest {
     CfgNode entry = parseFile("TryStmt03");
     CfgNode tryEntry = succ(entry, "try");
     CfgNode[] targets = succ(tryEntry, "if (condition)", "x()");
-    assertThat(cfgNames(targets[0].successors())).containsExactly("x()", "x()");
 
     CfgNode exception = succ(targets[1], "exception");
     CfgNode exit = succ(exception, "exit");
 
-    // Here we need some logic to distingquish two successors with
-    // the same name.
-    Iterator<? extends CfgNode> succ = targets[0].successors().iterator();
-    CfgNode x1 = succ.next();
-    CfgNode x2 = succ.next();
-    // One of the branches has y() as follow and the other has exit.
-    if (x1.successors().iterator().next().toString().equals("exit")) {
-      // Swap so that x1 is the one with y() as successor.
-      CfgNode temp = x1;
-      x1 = x2;
-      x2 = temp;
-    }
-    assertThat(succ(succ(x1, "y()"), "exit")).isSameAs(exit);
-    assertThat(succ(x2, "exit")).isSameAs(exit);
+    CfgNode[] ifSucc = succ(targets[0], "return", "x()");
+    assertThat(succ(succ(ifSucc[0], "x()"), "exit")).isSameAs(exit);
+    assertThat(succ(succ(ifSucc[1], "y()"), "exit")).isSameAs(exit);
   }
 
   @Test public void filtering01() {
@@ -368,9 +358,9 @@ public class StmtCfgTest {
     CfgNode i = succ(entry, "i()");
     CfgNode j = succ(i, "j()");
     CfgNode cond = succ(j, "cond()");
-    CfgNode branch = succ(cond, "for (cond() && c == 3)");
-    CfgNode[] targets = succ(branch, "stmt()", "exit");
-    CfgNode stmt = targets[0];
+    CfgNode forBranch = succ(cond, "for (cond() && c == 3)");
+    CfgNode[] forSucc = succ(forBranch, "stmt()", "return");
+    CfgNode stmt = forSucc[0];
     CfgNode u1 = succ(stmt, "u1()");
     CfgNode u2 = succ(u1, "u2()");
     CfgNode u3 = succ(u2, "u3()");
@@ -439,64 +429,70 @@ public class StmtCfgTest {
     assertThat(succ(targets2[0], "c1()")).isSameAs(targets[0]);
   }
 
+
   @Test public void genTryStmt04() {
     CfgNode entry = parseFile("GenTryStmt04");
     CfgNode tryEntry = succ(entry, "try");
-    CfgNode[] tryEntrySucc = succ(tryEntry, "x()", "if (condition)");
-    CfgNode exception = succ(tryEntrySucc[0], "exception");
-    CfgNode[] ifBranchSucc = succ(tryEntrySucc[1], "a()", "x()");
-    CfgNode exit = succ(exception, "exit");
-    CfgNode[] aSucc = succ(ifBranchSucc[0], "exception", "x()");
+    CfgNode[] tryEntrySucc = succ(tryEntry, "if (condition)", "x()");
+    CfgNode[] ifBranchSucc = succ(tryEntrySucc[0], "a()", "x()");
+    CfgNode exception = succ(tryEntrySucc[1], "exception");
+    CfgNode[] aSucc = succ(ifBranchSucc[0], "exception", "return");
     CfgNode y = succ(ifBranchSucc[1], "y()");
-    assertThat(succ(aSucc[0], "x()")).isSameAs(tryEntrySucc[0]);
-    assertThat(succ(aSucc[1], "exit")).isSameAs(exit);
+    CfgNode exit = succ(exception, "exit");
+    assertThat(succ(aSucc[0], "x()")).isSameAs(tryEntrySucc[1]);
+    CfgNode x2 = succ(aSucc[1], "x()");
     assertThat(succ(y, "exit")).isSameAs(exit);
+    assertThat(succ(x2, "exit")).isSameAs(exit);
   }
 
   @Test public void genTryStmt05() {
     CfgNode entry = parseFile("GenTryStmt05");
     CfgNode tryEntry = succ(entry, "try");
-    CfgNode[] targets = succ(tryEntry, "f2()", "try");
-    CfgNode exception = succ(targets[0], "exception");
-    CfgNode[] targets2 = succ(targets[1], "f1()", "if (condition)");
+    CfgNode[] tryEntrySucc = succ(tryEntry, "f2()", "try");
+    CfgNode exception = succ(tryEntrySucc[0], "exception");
+    CfgNode[] tryEntrySucc2 = succ(tryEntrySucc[1], "if (condition)", "f1()");
     CfgNode exit = succ(exception, "exit");
-    CfgNode exception2 = succ(targets2[0], "exception");
-    CfgNode[] targets3 = succ(targets2[1], "exception", "f1()");
-    assertThat(succ(exception2, "f2()")).isSameAs(targets[0]);
-    assertThat(succ(targets3[0], "f1()")).isSameAs(targets2[0]);
-    CfgNode[] targets4 = succ(targets3[1], "exception", "a()");
-    assertThat(succ(targets4[0], "f2()")).isSameAs(targets[0]);
-    CfgNode[] targets5 = succ(targets4[1], "exception", "f2()");
-    assertThat(succ(targets5[0], "f2()")).isSameAs(targets[0]);
-    CfgNode b = succ(targets5[1], "b()");
-    assertThat(succ(b, "exit")).isSameAs(exit);
+    CfgNode[] ifBranchSucc = succ(tryEntrySucc2[0], "exception", "f1()");
+    CfgNode[] f1Succ = succ(tryEntrySucc2[1], "exception", "return");
+    assertThat(succ(ifBranchSucc[0], "f1()")).isSameAs(tryEntrySucc2[1]);
+    CfgNode[] f1Succ2 = succ(ifBranchSucc[1], "exception", "return");
+    assertThat(succ(f1Succ[0], "f2()")).isSameAs(tryEntrySucc[0]);
+    CfgNode f22 = succ(f1Succ[1], "f2()");
+    assertThat(succ(f1Succ2[0], "f2()")).isSameAs(tryEntrySucc[0]);
+    CfgNode f24 = succ(f1Succ2[1], "f2()");
+    assertThat(succ(f22, "exit")).isSameAs(exit);
+    assertThat(succ(f24, "exit")).isSameAs(exit);
   }
 
   @Test public void genTryStmt06() {
     CfgNode entry = parseFile("GenTryStmt06");
     CfgNode tryEntry = succ(entry, "try");
-    CfgNode[] targets = succ(tryEntry, "try", "f2()");
-    CfgNode[] targets2 = succ(targets[0], "f1()", "s()");
-    CfgNode exception = succ(targets[1], "exception");
-    CfgNode f2 = succ(targets2[0], "f2()");
-    CfgNode[] targets3 = succ(targets2[1], "exception", "f1()");
+    CfgNode[] tryEntrySucc = succ(tryEntry, "f2()", "try");
+    CfgNode exception = succ(tryEntrySucc[0], "exception");
+    CfgNode[] tryEntrySucc2 = succ(tryEntrySucc[1], "s()", "f1()");
     CfgNode exit = succ(exception, "exit");
-    assertThat(succ(f2, "exit")).isSameAs(exit);
-    assertThat(succ(targets3[0], "f1()")).isSameAs(targets2[0]);
-    CfgNode[] targets4 = succ(targets3[1], "exception", "f2()");
-    assertThat(succ(targets4[0], "f2()")).isSameAs(targets[1]);
-    assertThat(succ(targets4[1], "exit")).isSameAs(exit);
+    CfgNode[] sSucc = succ(tryEntrySucc2[0], "exception", "f1()");
+    CfgNode[] f1Succ = succ(tryEntrySucc2[1], "exception", "return");
+    assertThat(succ(sSucc[0], "f1()")).isSameAs(tryEntrySucc2[1]);
+    CfgNode[] f1Succ2 = succ(sSucc[1], "exception", "return");
+    assertThat(succ(f1Succ[0], "f2()")).isSameAs(tryEntrySucc[0]);
+    CfgNode f22 = succ(f1Succ[1], "f2()");
+    assertThat(succ(f1Succ2[0], "f2()")).isSameAs(tryEntrySucc[0]);
+    CfgNode f24 = succ(f1Succ2[1], "f2()");
+    assertThat(succ(f22, "exit")).isSameAs(exit);
+    assertThat(succ(f24, "exit")).isSameAs(exit);
   }
 
   @Test public void genTryStmt07() {
     CfgNode entry = parseFile("GenTryStmt07");
     CfgNode tryEntry = succ(entry, "try");
-    CfgNode[] targets = succ(tryEntry, "c1()", "x()");
-    CfgNode f = succ(targets[0], "f()");
-    CfgNode[] targets2 = succ(targets[1], "exception", "f()");
+    CfgNode[] tryEntrySucc = succ(tryEntry, "c1()", "x()");
+    CfgNode returnMarker = succ(tryEntrySucc[0], "return");
+    CfgNode[] xSucc = succ(tryEntrySucc[1], "exception", "f()");
+    CfgNode f = succ(returnMarker, "f()");
+    assertThat(succ(xSucc[0], "c1()")).isSameAs(tryEntrySucc[0]);
+    CfgNode y = succ(xSucc[1], "y()");
     CfgNode exit = succ(f, "exit");
-    assertThat(succ(targets2[0], "c1()")).isSameAs(targets[0]);
-    CfgNode y = succ(targets2[1], "y()");
     assertThat(succ(y, "exit")).isSameAs(exit);
   }
 
@@ -507,10 +503,10 @@ public class StmtCfgTest {
     CfgNode whileBranch = succ(forBranchSucc[0], "while (c())");
     CfgNode exit = succ(forBranchSucc[1], "exit");
     CfgNode[] whileBranchSucc = succ(whileBranch, "if (i >= 40)", "u()");
-    CfgNode[] ifBranchSucc = succ(whileBranchSucc[0], "fin()", "c()");
-    assertThat(ifBranchSucc[0]).isSameAs(forBranchSucc[1]);
+    CfgNode[] ifBranchSucc = succ(whileBranchSucc[0], "break", "c()");
     assertThat(ifBranchSucc[1]).isSameAs(forBranchSucc[0]);
     assertThat(succ(whileBranchSucc[1], "for (i < 100)")).isSameAs(forBranch);
+    assertThat(succ(ifBranchSucc[0], "fin()")).isSameAs(forBranchSucc[1]);
   }
 
   @Test public void genForStmt02() {
@@ -520,10 +516,10 @@ public class StmtCfgTest {
     CfgNode whileBranch = succ(forBranchSucc[0], "while (c())");
     CfgNode exit = succ(forBranchSucc[1], "exit");
     CfgNode[] whileBranchSucc = succ(whileBranch, "if (i >= 40)", "u()");
-    CfgNode[] ifBranchSucc = succ(whileBranchSucc[0], "for (i < 100)", "c()");
-    assertThat(ifBranchSucc[0]).isSameAs(forBranch);
+    CfgNode[] ifBranchSucc = succ(whileBranchSucc[0], "continue", "c()");
     assertThat(ifBranchSucc[1]).isSameAs(forBranchSucc[0]);
     assertThat(succ(whileBranchSucc[1], "for (i < 100)")).isSameAs(forBranch);
+    assertThat(succ(ifBranchSucc[0], "for (i < 100)")).isSameAs(forBranch);
   }
 
   @Test public void genClassInstance01() {
@@ -539,14 +535,20 @@ public class StmtCfgTest {
     CfgNode entry = parseFile("GenSwitchStmt01");
     CfgNode whileBranch = succ(entry, "while (x + y == 400 - z)");
     CfgNode[] whileBranchSucc = succ(whileBranch, "switch (x)", "exit");
-    CfgNode[] switchBranchSucc = succ(whileBranchSucc[0], "c1()", "c6()", "while (x + y == 400 - z)", "c4()", "c5()", "c2()", "c3()");
+    CfgNode[] switchBranchSucc = succ(whileBranchSucc[0], "c3()", "c6()", "while (x + y == 400 - z)", "c1()", "c5()", "break", "c2()", "c4()");
     assertThat(switchBranchSucc[2]).isSameAs(whileBranch);
-    assertThat(succ(switchBranchSucc[0], "while (x + y == 400 - z)")).isSameAs(whileBranch);
-    assertThat(succ(switchBranchSucc[1], "while (x + y == 400 - z)")).isSameAs(whileBranch);
-    assertThat(succ(switchBranchSucc[3], "while (x + y == 400 - z)")).isSameAs(whileBranch);
-    assertThat(succ(switchBranchSucc[4], "exit")).isSameAs(whileBranchSucc[1]);
+    assertThat(succ(switchBranchSucc[0], "c2()")).isSameAs(switchBranchSucc[6]);
+    CfgNode breakMarker = succ(switchBranchSucc[1], "break");
+    CfgNode breakMarker2 = succ(switchBranchSucc[3], "break");
+    CfgNode returnMarker = succ(switchBranchSucc[4], "return");
     assertThat(succ(switchBranchSucc[5], "while (x + y == 400 - z)")).isSameAs(whileBranch);
-    assertThat(succ(switchBranchSucc[6], "c2()")).isSameAs(switchBranchSucc[5]);
+    CfgNode continueMarker = succ(switchBranchSucc[6], "continue");
+    CfgNode breakMarker3 = succ(switchBranchSucc[7], "break");
+    assertThat(succ(breakMarker, "while (x + y == 400 - z)")).isSameAs(whileBranch);
+    assertThat(succ(breakMarker2, "while (x + y == 400 - z)")).isSameAs(whileBranch);
+    assertThat(succ(returnMarker, "exit")).isSameAs(whileBranchSucc[1]);
+    assertThat(succ(continueMarker, "while (x + y == 400 - z)")).isSameAs(whileBranch);
+    assertThat(succ(breakMarker3, "while (x + y == 400 - z)")).isSameAs(whileBranch);
   }
 
   @Test public void genClassInstance02() {
