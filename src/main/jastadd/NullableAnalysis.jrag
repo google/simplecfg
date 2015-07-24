@@ -29,8 +29,8 @@ aspect NullableAnalysis {
       to CompilationUnit.findings()
       for compilationUnit();
 
-  syn String AbstractDot.nullableDereferenceFinding() =
-      finding(String.format(
+  syn ExtendJFinding AbstractDot.nullableDereferenceFinding() =
+      finding("NullableDereference", String.format(
           "Dereferencing %s, which was declared @Nullable", prevExpr().prettyPrint()));
 
   inh CompilationUnit AbstractDot.compilationUnit();

@@ -19,11 +19,12 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;
 
 import com.google.simplecfg.ast.CfgNode;
-import com.google.simplecfg.ast.JavaParser;
 import com.google.simplecfg.ast.CompilationUnit;
+import com.google.simplecfg.ast.ExtendJFinding;
+import com.google.simplecfg.ast.FileClassSource;
+import com.google.simplecfg.ast.JavaParser;
 import com.google.simplecfg.ast.Program;
 import com.google.simplecfg.ast.SourceFolderPath;
-import com.google.simplecfg.ast.FileClassSource;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -33,6 +34,7 @@ import org.junit.runners.JUnit4;
 import java.io.FileInputStream;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 
 /** Unit tests for the already-closed checker. */
 @RunWith(JUnit4.class)
@@ -58,7 +60,11 @@ public class CloseCheckTest {
       // caching to work right in the AST.
       unit = program.getCompilationUnit(0);
       unit.setClassSource(new FileClassSource(new SourceFolderPath("testdata"), filename));
-      return unit.findings();
+      Collection<String> findings = new HashSet<String>();
+      for (ExtendJFinding finding : unit.findings()) {
+        findings.add(finding.toString());
+      }
+      return findings;
     } catch (Exception e) {
       e.printStackTrace();
       fail("failed to parse test input file: " + path);

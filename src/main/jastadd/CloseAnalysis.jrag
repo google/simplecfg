@@ -35,8 +35,9 @@ aspect CloseAnalysis {
   inh CompilationUnit MethodAccess.compilationUnit();
 
   /** Generate a finding for method call after close() call.  */
-  syn lazy String MethodAccess.alreadyClosedFinding() =
-      finding(String.format("close() may have already been called on %s at this point",
+  syn lazy ExtendJFinding MethodAccess.alreadyClosedFinding() =
+      finding("CloseCheck",
+          String.format("close() may have already been called on %s at this point",
           prevExpr().prettyPrint()));
 
   /** Check if the reciever of this method access was already closed. */

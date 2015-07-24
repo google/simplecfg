@@ -18,6 +18,7 @@ package com.google.simplecfg;
 import com.google.simplecfg.ast.BytecodeParser;
 import com.google.simplecfg.ast.BytecodeReader;
 import com.google.simplecfg.ast.CompilationUnit;
+import com.google.simplecfg.ast.ExtendJFinding;
 import com.google.simplecfg.ast.Frontend;
 import com.google.simplecfg.ast.JavaParser;
 
@@ -26,9 +27,9 @@ import java.util.Collection;
 import java.util.Iterator;
 
 /**
- * Produces API usage findings using the ExtendJ compiler.
+ * Produces findings using analyzers implemented in the ExtendJ compiler.
  */
-public class ApiChecker extends Frontend {
+public class ExtendJAnalyzer extends Frontend {
   private final JavaParser javaParser;
   private final BytecodeParser bytecodeParser;
 
@@ -37,18 +38,16 @@ public class ApiChecker extends Frontend {
    * @param args command-line arguments
    */
   public static void main(String[] args) {
-    ApiChecker checker = new ApiChecker();
+    ExtendJAnalyzer checker = new ExtendJAnalyzer();
     int result = checker.run(args);
     if (result != 0) {
       System.exit(result);
     }
   }
 
-  /**
-   * Create new java checker instance.
-   */
-  public ApiChecker() {
-    super("API Checker", "v1.0");
+  /** Create new analyzer instance.  */
+  public ExtendJAnalyzer() {
+    super("ExtendJ Analyzer", "v1.0");
     javaParser = new JavaParser() {
       @Override
       public CompilationUnit parse(java.io.InputStream is, String fileName)
@@ -71,7 +70,7 @@ public class ApiChecker extends Frontend {
   @Override
   protected int processCompilationUnit(CompilationUnit unit) {
     if (unit.fromSource()) {
-      for (String finding : unit.findings()) {
+      for (ExtendJFinding finding : unit.findings()) {
         System.out.println(finding);
       }
     }
