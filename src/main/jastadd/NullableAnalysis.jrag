@@ -30,7 +30,8 @@ aspect NullableAnalysis {
       for compilationUnit();
 
   syn String AbstractDot.nullableDereferenceFinding() =
-      finding("Using a nullable parameter without a != null guard!");
+      finding(String.format(
+          "Dereferencing %s, which was declared @Nullable", prevExpr().prettyPrint()));
 
   inh CompilationUnit AbstractDot.compilationUnit();
 
@@ -132,6 +133,10 @@ aspect NullableAnalysis {
       || getRightOperand().isNull() && getLeftOperand().varDecl() == var;
   eq LogNotExpr.isNullTest(Variable var) = getOperand().isNonNullTest(var);
   eq ParExpr.isNullTest(Variable var) = getExpr().isNullTest(var);
+  eq AndLogicalExpr.isNullTest(Variable var) =
+      getLeftOperand().isNullTest(var) || getRightOperand().isNullTest(var);
+  eq OrLogicalExpr.isNullTest(Variable var) =
+      getLeftOperand().isNullTest(var) || getRightOperand().isNullTest(var);
 
   syn boolean Expr.isNonNullTest(Variable var) = false;
   eq NEExpr.isNonNullTest(Variable var) =
@@ -139,6 +144,11 @@ aspect NullableAnalysis {
       || getRightOperand().isNull() && getLeftOperand().varDecl() == var;
   eq LogNotExpr.isNonNullTest(Variable var) = getOperand().isNullTest(var);
   eq ParExpr.isNonNullTest(Variable var) = getExpr().isNonNullTest(var);
+  eq AndLogicalExpr.isNonNullTest(Variable var) =
+      getLeftOperand().isNonNullTest(var) || getRightOperand().isNonNullTest(var);
+  eq OrLogicalExpr.isNonNullTest(Variable var) =
+      getLeftOperand().isFalse() && getRightOperand().isNonNullTest(var)
+      || getRightOperand().isFalse() && getLeftOperand().isNonNullTest(var);
 
   syn boolean Expr.isNull() = type().isNull();
   eq NullLiteral.isNull() = true;
