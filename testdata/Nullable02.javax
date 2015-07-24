@@ -42,16 +42,16 @@ class Nullable02 {
   void f5(@Nullable Test p, Text n) {
     if (p != null || n == null) {
       p.x = true; // positive
-	}
+    }
   }
   void f6(@Nullable Test p, Text n) {
     if (p != null || n == null) {
       p.x = true; // positive
-	}
+    }
   }
   void f7(@Nullable Test p, Text n) {
     if (p != null || false) {
       p.x = true; // negative
-	}
+    }
   }
 }

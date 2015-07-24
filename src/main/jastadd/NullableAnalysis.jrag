@@ -24,53 +24,126 @@ aspect NullableAnalysis {
     addPlaceholderType(libs, "javax.annotation", "Nullable");
   }
 
-  AbstractDot contributes nullableDereferenceFinding()
-      when isNullableDereference()
+  // Give ParameterDeclaration access to the inherited comilationUnit attribute.
+  inh CompilationUnit ParameterDeclaration.compilationUnit();
+
+  ParameterDeclaration contributes nullableDereferenceFinding()
+      when nullableDereferenceFinding() != null
       to CompilationUnit.findings()
       for compilationUnit();
 
-  syn ExtendJFinding AbstractDot.nullableDereferenceFinding() =
-      finding("NullableDereference", String.format(
-          "Dereferencing %s, which was declared @Nullable", prevExpr().prettyPrint()));
+  /**
+   * Generate a NullableDereference finding for this dot expression,
+   * if no finding should be reported this attribute returns {@code null}.
+   */
+  syn lazy ExtendJFinding ParameterDeclaration.nullableDereferenceFinding() {
+    if (!getModifiers().hasNullableAnnotation()) {
+      return null;
+    }
+    if (!isFinal() && !isEffectivelyFinal()) {
+      // Do not analyze non-effectively final parameters.
+      return null;
+    }
+    Expr location = findNullableDereference(this);
+    if (location == null) {
+      return null;
+    }
+    return location.finding("NullableDereference", String.format(
+        "Dereferencing %s, which was declared @Nullable.", name()));
+  }
 
-  inh CompilationUnit AbstractDot.compilationUnit();
+  /**
+   * Find a location, not necessarily the first location, in the host method/constructor where the
+   * parameter is accessed without a null guard.
+   */
+  inh Expr ParameterDeclaration.findNullableDereference(Variable var);
 
-  syn lazy boolean AbstractDot.isNullableDereference() =
-      getLeft().nullableParameter()
-      && !getLeft().hasNullGuard(getLeft().varDecl())
-      && !hasNonEnclosingNullGuard();
+  eq Program.getChild().findNullableDereference(Variable var) = null;
+  eq BodyDecl.getChild().findNullableDereference(Variable var) = null;
 
+  eq MethodDecl.getParameter().findNullableDereference(Variable var) {
+    if (!hasBlock()) {
+      return null;
+    }
+    CfgNode cfgNode = entry().bfs(new NullDereferenceLocator(var));
+    return cfgNode == null ? null : cfgNode.receiverExpr();
+  }
+
+  eq ConstructorDecl.getParameter().findNullableDereference(Variable var) {
+    CfgNode cfgNode = entry().bfs(new NullDereferenceLocator(var));
+    return cfgNode == null ? null : cfgNode.receiverExpr();
+  }
+
+  /**
+   * A CFG visitor that searches in the forward CFG for a nullable dereference.
+   * <p>
+   * The search stops at parts of the search tree guarded by a null check on the receiver variable.
+   */
+  class NullDereferenceLocator implements CfgVisitor {
+    private final Variable var;
+
+    public NullDereferenceLocator(Variable var) {
+      this.var = var;
+    }
+
+    @Override public SearchAction processEdge(CfgNode pred, CfgNode succ) {
+      if (pred.isNullGuard(var, succ)) {
+        return SearchAction.SKIP;
+      }
+      Expr receiver = succ.receiverExpr();
+      if (receiver != null && receiver.isVariable(var) && !receiver.hasNullGuard(var)) {
+        return SearchAction.SUCCESSOR_MATCH;
+      }
+      return SearchAction.CONTINUE;
+    }
+  }
+
+  /**
+   * Returns the receiver expression if the CFG node is the child of a dereferece expression.
+   * Returns {@code null} otherwise.
+   */
+  inh Expr CfgNode.receiverExpr();
+  eq Program.getChild().receiverExpr() = null;
+  eq BodyDecl.getChild().receiverExpr() = null;
+  eq BodyDecl.exit().receiverExpr() = null;
+  eq TryStmt.tryEntryMarker().receiverExpr() = null;
+  eq BreakStmt.marker().receiverExpr() = null;
+  eq ContinueStmt.marker().receiverExpr() = null;
+  eq ReturnStmt.marker().receiverExpr() = null;
+  eq MethodAccess.exceptionNode().receiverExpr() = null;
+  eq MethodAccess.call().receiverExpr() =
+      hasPrevExpr()
+      ? prevExpr()
+      : null;
+  eq ThrowStmt.exceptionNode().receiverExpr() = null;
+  eq TryStmt.exceptionNode().receiverExpr() = null;
+  eq ConditionalExpr.branch().receiverExpr() = null;
+  eq ConditionalExpr.thenEndMarker().receiverExpr() = null;
+  eq ConditionalExpr.elseEndMarker().receiverExpr() = null;
+  eq IfStmt.branch().receiverExpr() = null;
+  eq IfStmt.thenEndMarker().receiverExpr() = null;
+  eq IfStmt.elseEndMarker().receiverExpr() = null;
+  eq ForStmt.branch().receiverExpr() = null;
+  eq EnhancedForStmt.branch().receiverExpr() = null;
+  eq WhileStmt.branch().receiverExpr() = null;
+  eq DoStmt.branch().receiverExpr() = null;
+  eq SwitchStmt.branch().receiverExpr() = null;
+  eq LambdaBody.exit().receiverExpr() = null;
+  eq AbstractDot.nullableDereferenceMarker().receiverExpr() = getLeft();
+
+  /** Marker node used to find location of a nullable dereference in the CFG.  */
   syn nta CfgMarker AbstractDot.nullableDereferenceMarker() = new CfgMarker();
+
+  /** Insert nullable dereference marker in the CFG.  */
   refine SimpleCFG
   eq AbstractDot.getLeft().follow() =
-      !getRight().isMethodAccess() && getLeft().nullableParameter()
-      ? nullableDereferenceMarker()
-      : getRight().entry();
+      getRight().isMethodAccess()
+      ? refined()
+      : nullableDereferenceMarker();
 
   eq AbstractDot.nullableDereferenceMarker().markerName() = "nullable access";
   eq AbstractDot.nullableDereferenceMarker().markerVarName() = "nullable";
   eq AbstractDot.nullableDereferenceMarker().succ() = Collections.singleton(getRight().entry());
-
-  /**
-   * This checks if there is a null guard that is not in an enclosing if condition.
-   * The check is performed using the simple CFG by finding the next CFG node following this
-   * expression and then checking each path in the reverse CFG to see if all paths are null
-   * guarded.
-   */
-  syn boolean AbstractDot.hasNonEnclosingNullGuard() {
-    final Variable var = getLeft().varDecl();
-    return null == getLeft().follow().reverseBfs(new CfgVisitor() {
-      @Override public SearchAction processEdge(CfgNode pred, CfgNode succ) {
-        if (succ instanceof CfgEntry) {
-          return SearchAction.SUCCESSOR_MATCH;
-        }
-        if (succ.isNullGuard(var, pred)) {
-          return SearchAction.SKIP;
-        }
-        return SearchAction.CONTINUE;
-      }
-    });
-  }
 
   syn boolean CfgNode.isNullGuard(Variable var, CfgNode succ) = false;
 
@@ -94,16 +167,16 @@ aspect NullableAnalysis {
   eq DoStmt.branch().inhNullGuard(Variable var, CfgNode succ) = false;
   eq SwitchStmt.branch().inhNullGuard(Variable var, CfgNode succ) = false;
 
-  /** Test if this expression refers to a parameter declared as nullable. */
-  syn boolean Expr.nullableParameter() = varDecl() != null && varDecl().nullableParameter();
+  /** Test if this expression refers to a parameter declared as nullable.  */
+  syn boolean Expr.isNullableParameter() = varDecl() != null && varDecl().isNullableParameter();
 
-  /** Test if this variable is a parameter declared as nullable. */
-  syn boolean Variable.nullableParameter() =
+  /** Test if this variable is a parameter declared as nullable.  */
+  syn boolean Variable.isNullableParameter() =
       isParameter()
       && (isFinal() || isEffectivelyFinal())
       && declaredNullable();
 
-  /** Test if this variable is declared {@code @Nullable} */
+  /** Test if this variable is declared {@code @Nullable}.  */
   syn boolean Variable.declaredNullable();
   eq FieldDeclaration.declaredNullable() = false;
   eq VariableDeclaration.declaredNullable() = false;
@@ -138,6 +211,13 @@ aspect NullableAnalysis {
   eq OrLogicalExpr.isNullTest(Variable var) =
       getLeftOperand().isNullTest(var) || getRightOperand().isNullTest(var);
 
+  eq AbstractDot.isNullTest(Variable var) =
+      !getLeft().isVariable(var) && getRight().isNullTest(var);
+
+  // Assume that a method call to X.isNull_(var) is equivalent to a null test on var.
+  eq MethodAccess.isNullTest(Variable var) =
+      name().startsWith("isNull") && getNumArg() == 1 && getArg(0).isVariable(var);
+
   syn boolean Expr.isNonNullTest(Variable var) = false;
   eq NEExpr.isNonNullTest(Variable var) =
       getLeftOperand().isNull() && getRightOperand().varDecl() == var
@@ -149,6 +229,14 @@ aspect NullableAnalysis {
   eq OrLogicalExpr.isNonNullTest(Variable var) =
       getLeftOperand().isFalse() && getRightOperand().isNonNullTest(var)
       || getRightOperand().isFalse() && getLeftOperand().isNonNullTest(var);
+
+  eq AbstractDot.isNonNullTest(Variable var) =
+      !getLeft().isVariable(var) && getRight().isNonNullTest(var);
+
+  // Assume that a method call to X.isNo{t,n}Null_(var) is equivalent to a non-null test on var.
+  eq MethodAccess.isNonNullTest(Variable var) =
+      (name().startsWith("isNotNull") || name().startsWith("isNonNull"))
+      && getNumArg() == 1 && getArg(0).isVariable(var);
 
   syn boolean Expr.isNull() = type().isNull();
   eq NullLiteral.isNull() = true;

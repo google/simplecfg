@@ -39,6 +39,10 @@ jastadd {
 	parser.name = 'JavaParser'
 }
 
+test {
+	inputs.dir file('testdata')
+}
+
 mainClassName = 'com.google.simplecfg.PrintCfg'
 jar.manifest.attributes 'Main-Class': mainClassName
 jar.destinationDir = projectDir

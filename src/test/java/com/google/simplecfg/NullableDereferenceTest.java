@@ -77,17 +77,22 @@ public class NullableDereferenceTest {
   @Test public void test01() {
     Collection<String> findings = findings("Nullable01");
     assertThat(findings).containsExactly(
-        "Nullable01:39:25: Dereferencing p, which was declared @Nullable",
-        "Nullable01:46:12: Dereferencing p, which was declared @Nullable",
-        "Nullable01:59:12: Dereferencing p, which was declared @Nullable"
+        "Nullable01:39:25: Dereferencing p, which was declared @Nullable.",
+        "Nullable01:46:12: Dereferencing p, which was declared @Nullable.",
+        "Nullable01:59:12: Dereferencing p, which was declared @Nullable."
         );
   }
 
   @Test public void test02() {
     Collection<String> findings = findings("Nullable02");
     assertThat(findings).containsExactly(
-        "Nullable02:44:7: Dereferencing p, which was declared @Nullable",
-        "Nullable02:49:7: Dereferencing p, which was declared @Nullable"
+        "Nullable02:44:7: Dereferencing p, which was declared @Nullable.",
+        "Nullable02:49:7: Dereferencing p, which was declared @Nullable."
         );
+  }
+
+  @Test public void test03() {
+    Collection<String> findings = findings("Nullable03");
+    assertThat(findings).isEmpty();
   }
 }
