@@ -147,6 +147,20 @@ aspect NullableAnalysis {
 
   syn boolean CfgNode.isNullGuard(Variable var, CfgNode succ) = false;
 
+  /**
+   * We assume that calling a method named checkNotNull on the variable var will throw an exception
+   * if the argument is null.
+   */
+  eq CfgMethodCall.isNullGuard(Variable var, CfgNode succ) {
+    if (succ instanceof CfgException) {
+      return false;
+    }
+    MethodAccess access = methodAccess();
+    return (access.name().equals("checkNotNull") || access.name().equals("checkNonNull"))
+        && access.getNumArg() == 1 && access.getArg(0).isVariable(var);
+  }
+
+  /** Check if this branch has a null-guarding condition.  */
   eq CfgBranch.isNullGuard(Variable var, CfgNode succ) = inhNullGuard(var, succ);
 
   inh boolean CfgBranch.inhNullGuard(Variable var, CfgNode succ);
