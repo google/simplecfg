@@ -167,23 +167,7 @@ aspect NullableAnalysis {
   eq DoStmt.branch().inhNullGuard(Variable var, CfgNode succ) = false;
   eq SwitchStmt.branch().inhNullGuard(Variable var, CfgNode succ) = false;
 
-  /** Test if this expression refers to a parameter declared as nullable.  */
-  syn boolean Expr.isNullableParameter() = varDecl() != null && varDecl().isNullableParameter();
-
-  /** Test if this variable is a parameter declared as nullable.  */
-  syn boolean Variable.isNullableParameter() =
-      isParameter()
-      && (isFinal() || isEffectivelyFinal())
-      && declaredNullable();
-
-  /** Test if this variable is declared {@code @Nullable}.  */
-  syn boolean Variable.declaredNullable();
-  eq FieldDeclaration.declaredNullable() = false;
-  eq VariableDeclaration.declaredNullable() = false;
-  eq InferredParameterDeclaration.declaredNullable() = false;
-  eq ParameterDeclaration.declaredNullable() = getModifiers().hasNullableAnnotation();
-  eq CatchParameterDeclaration.declaredNullable() = getModifiers().hasNullableAnnotation();
-
+  /** Returns {@code true} if this set of modifiers includes {@code javax.annotation.Nullable}.  */
   syn boolean Modifiers.hasNullableAnnotation() = hasAnnotation("javax.annotation", "Nullable");
 
   /** Return {@code true} if this expression is guarded by a != null check for var.  */
