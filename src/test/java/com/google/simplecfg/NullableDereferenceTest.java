@@ -16,64 +16,19 @@
 package com.google.simplecfg;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assert.fail;
-
-import com.google.simplecfg.ast.CompilationUnit;
-import com.google.simplecfg.ast.ExtendJFinding;
-import com.google.simplecfg.ast.FileClassSource;
-import com.google.simplecfg.ast.JavaParser;
-import com.google.simplecfg.ast.Program;
-import com.google.simplecfg.ast.SourceFolderPath;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import java.io.FileInputStream;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
 
-/** Unit tests for the already-closed checker. */
+/** Integration tests for the nullable dereference checker. */
 @RunWith(JUnit4.class)
 public class NullableDereferenceTest {
 
-  /** Helper to get the findings for a given file. */
-  private static Collection<String> findings(String filename) {
-    String path = "testdata/" + filename + ".javax";
-    try {
-      JavaParser parser = new JavaParser() {
-        @Override
-        public CompilationUnit parse(java.io.InputStream is,
-            String fileName) throws java.io.IOException,
-            beaver.Parser.Exception {
-          return new parser.JavaParser().parse(is, fileName);
-        }
-      };
-      Program program = new Program();
-      CompilationUnit unit = parser.parse(new FileInputStream(path), path);
-      // Attach the parsed unit to a program node so we have a healthy AST.
-      program.addCompilationUnit(unit);
-      // Ensure compilation unit is set to final. This is important to get
-      // caching to work right in the AST.
-      unit = program.getCompilationUnit(0);
-      unit.setClassSource(new FileClassSource(new SourceFolderPath("testdata"), filename));
-      Collection<String> findings = new HashSet<String>();
-      for (ExtendJFinding finding : unit.findings()) {
-        findings.add(finding.toString());
-      }
-      return findings;
-    } catch (Exception e) {
-      e.printStackTrace();
-      fail("failed to parse test input file: " + path);
-    }
-    // Failure.
-    return Collections.emptySet();
-  }
-
-
   @Test public void test01() {
-    Collection<String> findings = findings("Nullable01");
+    Collection<String> findings = StmtCfgTest.findings("Nullable01");
     assertThat(findings).containsExactly(
         "Nullable01:39:25: Dereferencing p, which was declared @Nullable.",
         "Nullable01:46:12: Dereferencing p, which was declared @Nullable.",
@@ -82,7 +37,7 @@ public class NullableDereferenceTest {
   }
 
   @Test public void test02() {
-    Collection<String> findings = findings("Nullable02");
+    Collection<String> findings = StmtCfgTest.findings("Nullable02");
     assertThat(findings).containsExactly(
         "Nullable02:44:7: Dereferencing p, which was declared @Nullable.",
         "Nullable02:49:7: Dereferencing p, which was declared @Nullable."
@@ -90,7 +45,7 @@ public class NullableDereferenceTest {
   }
 
   @Test public void test03() {
-    Collection<String> findings = findings("Nullable03");
+    Collection<String> findings = StmtCfgTest.findings("Nullable03");
     assertThat(findings).isEmpty();
   }
 }

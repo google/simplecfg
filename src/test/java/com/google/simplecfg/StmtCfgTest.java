@@ -19,9 +19,12 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;
 
 import com.google.simplecfg.ast.CfgNode;
-import com.google.simplecfg.ast.JavaParser;
 import com.google.simplecfg.ast.CompilationUnit;
+import com.google.simplecfg.ast.ExtendJFinding;
+import com.google.simplecfg.ast.FileClassSource;
+import com.google.simplecfg.ast.JavaParser;
 import com.google.simplecfg.ast.Program;
+import com.google.simplecfg.ast.SourceFolderPath;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -31,17 +34,16 @@ import java.io.FileInputStream;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Set;
 
 /** Tests for simplified Control Flow Graphs built for methods/constructors/initializers.  */
 @RunWith(JUnit4.class)
 public class StmtCfgTest {
 
-  private static CfgNode parseFile(String filename) {
+  /** Helper method to parse an ExtendJ compilation unit from a file.  */
+  private static CompilationUnit parseFile(String filename) {
     String path = "testdata/" + filename + ".javax";
     try {
       JavaParser parser = new JavaParser() {
@@ -59,15 +61,31 @@ public class StmtCfgTest {
       // Ensure compilation unit is set to final. This is important to get
       // caching to work right in the AST.
       unit = program.getCompilationUnit(0);
-      assertThat(unit.getTypeDeclList()).isNotEmpty();
-      assertThat(unit.getTypeDecl(0).getBodyDeclList()).isNotEmpty();
-      return unit.getTypeDecl(0).getBodyDecl(0).entry();
+      unit.setClassSource(new FileClassSource(new SourceFolderPath("testdata"), filename));
+      return unit;
     } catch (Exception e) {
       e.printStackTrace();
       fail("failed to parse test input file: " + path);
     }
-    // Failure.
+    // Failed.
     return null;
+  }
+
+  /** Helper to get the findings for a given file. */
+  protected static Collection<String> findings(String filename) {
+    CompilationUnit unit = StmtCfgTest.parseFile(filename);
+    Collection<String> findings = new HashSet<String>();
+    for (ExtendJFinding finding : unit.findings()) {
+      findings.add(finding.toString());
+    }
+    return findings;
+  }
+
+  private static CfgNode parseCfg(String filename) {
+    CompilationUnit unit = parseFile(filename);
+    assertThat(unit.getTypeDeclList()).isNotEmpty();
+    assertThat(unit.getTypeDecl(0).getBodyDeclList()).isNotEmpty();
+    return unit.getTypeDecl(0).getBodyDecl(0).entry();
   }
 
   /**
@@ -118,7 +136,7 @@ public class StmtCfgTest {
   }
 
   @Test public void ifStmt01() {
-    CfgNode entry = parseFile("IfStmt01");
+    CfgNode entry = parseCfg("IfStmt01");
     CfgNode call1 = succ(entry, "call1()");
     CfgNode branch = succ(call1, "if (call1())");
     CfgNode[] targets = succ(branch, "onTrue()", "exit");
@@ -127,7 +145,7 @@ public class StmtCfgTest {
   }
 
   @Test public void ifStmt02() {
-    CfgNode entry = parseFile("IfStmt02");
+    CfgNode entry = parseCfg("IfStmt02");
     CfgNode call1 = succ(entry, "call1()");
     CfgNode branch = succ(call1, "if (call1())");
     CfgNode[] targets = succ(branch, "onTrue()", "onFalse()");
@@ -137,7 +155,7 @@ public class StmtCfgTest {
   }
 
   @Test public void ifStmt03() {
-    CfgNode entry = parseFile("IfStmt03");
+    CfgNode entry = parseCfg("IfStmt03");
     CfgNode call1 = succ(entry, "call1()");
     CfgNode branch = succ(call1, "if (call1())");
     CfgNode[] targets = succ(branch, "onTrue()", "onFalse()");
@@ -146,7 +164,7 @@ public class StmtCfgTest {
   }
 
   @Test public void ifStmt04() {
-    CfgNode entry = parseFile("IfStmt04");
+    CfgNode entry = parseCfg("IfStmt04");
     CfgNode call1 = succ(entry, "call1()");
     CfgNode branch = succ(call1, "if (call1())");
     CfgNode[] targets = succ(branch, "onTrue()", "onFalse()");
@@ -155,7 +173,7 @@ public class StmtCfgTest {
   }
 
   @Test public void forStmt01() {
-    CfgNode entry = parseFile("ForStmt01");
+    CfgNode entry = parseCfg("ForStmt01");
     CfgNode call1 = succ(entry, "call1()");
     CfgNode branch = succ(call1, "for (call1())");
     CfgNode[] targets = succ(branch, "call1()", "exit");
@@ -163,7 +181,7 @@ public class StmtCfgTest {
   }
 
   @Test public void forStmt02() {
-    CfgNode entry = parseFile("ForStmt02");
+    CfgNode entry = parseCfg("ForStmt02");
     CfgNode call1 = succ(entry, "call1()");
     CfgNode branch = succ(call1, "for (call1())");
     CfgNode[] targets = succ(branch, "call2()", "exit");
@@ -171,7 +189,7 @@ public class StmtCfgTest {
   }
 
   @Test public void forStmt03() {
-    CfgNode entry = parseFile("ForStmt03");
+    CfgNode entry = parseCfg("ForStmt03");
     CfgNode init = succ(entry, "init()");
     CfgNode cond = succ(init, "cond()");
     CfgNode branch = succ(cond, "for (cond())");
@@ -182,7 +200,7 @@ public class StmtCfgTest {
   }
 
   @Test public void forStmt04() {
-    CfgNode entry = parseFile("ForStmt04");
+    CfgNode entry = parseCfg("ForStmt04");
     CfgNode i = succ(entry, "i()");
     CfgNode j = succ(i, "j()");
     CfgNode cond = succ(j, "cond()");
@@ -196,7 +214,7 @@ public class StmtCfgTest {
   }
 
   @Test public void forStmt05() {
-    CfgNode entry = parseFile("ForStmt05");
+    CfgNode entry = parseCfg("ForStmt05");
     CfgNode i = succ(entry, "i()");
     CfgNode branch = succ(i, "for (false)");
     CfgNode y = succ(branch, "y()");
@@ -204,13 +222,13 @@ public class StmtCfgTest {
   }
 
   @Test public void whileStmt01() {
-    CfgNode entry = parseFile("WhileStmt01");
+    CfgNode entry = parseCfg("WhileStmt01");
     CfgNode branch = succ(entry, "while (true)");
     assertThat(succ(branch, "while (true)")).isSameAs(branch);
   }
 
   @Test public void whileStmt02() {
-    CfgNode entry = parseFile("WhileStmt02");
+    CfgNode entry = parseCfg("WhileStmt02");
     CfgNode cond = succ(entry, "cond()");
     CfgNode branch = succ(cond, "while (cond())");
     CfgNode[] targets = succ(branch, "cond()", "exit");
@@ -218,7 +236,7 @@ public class StmtCfgTest {
   }
 
   @Test public void whileStmt03() {
-    CfgNode entry = parseFile("WhileStmt03");
+    CfgNode entry = parseCfg("WhileStmt03");
     CfgNode whileBranch = succ(entry, "while (true)");
     CfgNode cond = succ(whileBranch, "cond()");
     CfgNode ifBranch = succ(cond, "if (cond())");
@@ -228,7 +246,7 @@ public class StmtCfgTest {
   }
 
   @Test public void whileStmt04() {
-    CfgNode entry = parseFile("WhileStmt04");
+    CfgNode entry = parseCfg("WhileStmt04");
     CfgNode whileBranch = succ(entry, "while (true)");
     CfgNode cond = succ(whileBranch, "cond()");
     CfgNode ifBranch = succ(cond, "if (cond())");
@@ -239,14 +257,14 @@ public class StmtCfgTest {
   }
 
   @Test public void whileStmt05() {
-    CfgNode entry = parseFile("WhileStmt05");
+    CfgNode entry = parseCfg("WhileStmt05");
     CfgNode branch = succ(entry, "while (false)");
     CfgNode y = succ(branch, "y()");
     succ(y, "exit");
   }
 
   @Test public void doStmt01() {
-    CfgNode entry = parseFile("DoStmt01");
+    CfgNode entry = parseCfg("DoStmt01");
     CfgNode x = succ(entry, "x()");
     CfgNode y = succ(x, "y()");
     CfgNode branch = succ(y, "do_while (y())");
@@ -256,7 +274,7 @@ public class StmtCfgTest {
   }
 
   @Test public void doStmt02() {
-    CfgNode entry = parseFile("DoStmt02");
+    CfgNode entry = parseCfg("DoStmt02");
     CfgNode x = succ(entry, "x()");
     CfgNode branch = succ(x, "do_while (false)");
     CfgNode y = succ(branch, "y()");
@@ -264,7 +282,7 @@ public class StmtCfgTest {
   }
 
   @Test public void enhancedFor01() {
-    CfgNode entry = parseFile("EnhancedFor01");
+    CfgNode entry = parseCfg("EnhancedFor01");
     CfgNode aList = succ(entry, "aList()");
     CfgNode branch = succ(aList, "for (int a : aList())");
     CfgNode[] targets = succ(branch, "x()", "exit");
@@ -272,7 +290,7 @@ public class StmtCfgTest {
   }
 
   @Test public void methodAccess01() {
-    CfgNode entry = parseFile("MethodAccess01");
+    CfgNode entry = parseCfg("MethodAccess01");
     CfgNode p1 = succ(entry, "p1()");
     CfgNode p2 = succ(p1, "p2()");
     CfgNode p3 = succ(p2, "p3()");
@@ -281,7 +299,7 @@ public class StmtCfgTest {
   }
 
   @Test public void conditionalExpr01() {
-    CfgNode entry = parseFile("ConditionalExpr01");
+    CfgNode entry = parseCfg("ConditionalExpr01");
     CfgNode x = succ(entry, "x()");
     CfgNode branch = succ(x, "if (x())");
     CfgNode[] targets = succ(branch, "y()", "z()");
@@ -292,7 +310,7 @@ public class StmtCfgTest {
   }
 
   @Test public void switchStmt01() {
-    CfgNode entry = parseFile("SwitchStmt01");
+    CfgNode entry = parseCfg("SwitchStmt01");
     CfgNode expr = succ(entry, "expr()");
     CfgNode branch = succ(expr, "switch (expr())");
     CfgNode[] targets = succ(branch, "x()", "y()", "z()", "d()");
@@ -303,7 +321,7 @@ public class StmtCfgTest {
   }
 
   @Test public void switchStmt02() {
-    CfgNode entry = parseFile("SwitchStmt02");
+    CfgNode entry = parseCfg("SwitchStmt02");
     CfgNode expr = succ(entry, "expr()");
     CfgNode branch = succ(expr, "switch (expr())");
     CfgNode[] targets = succ(branch, "x()", "y()", "z()", "exit");
@@ -313,7 +331,7 @@ public class StmtCfgTest {
   }
 
   @Test public void tryStmt01() {
-    CfgNode entry = parseFile("TryStmt01");
+    CfgNode entry = parseCfg("TryStmt01");
     CfgNode tryBranch = succ(entry, "try");
     CfgNode[] trySucc = succ(tryBranch, "cond()", "x()");
     CfgNode[] condSucc = succ(trySucc[0], "exception", "if (cond())");
@@ -331,7 +349,7 @@ public class StmtCfgTest {
   }
 
   @Test public void tryStmt02() {
-    CfgNode entry = parseFile("TryStmt02");
+    CfgNode entry = parseCfg("TryStmt02");
     CfgNode tryBranch = succ(entry, "try");
     CfgNode[] tryTargets = succ(tryBranch, "c1()", "c2()", "exit");
     assertThat(succ(tryTargets[0], "exit")).isSameAs(tryTargets[2]);
@@ -339,7 +357,7 @@ public class StmtCfgTest {
   }
 
   @Test public void tryStmt03() {
-    CfgNode entry = parseFile("TryStmt03");
+    CfgNode entry = parseCfg("TryStmt03");
     CfgNode tryEntry = succ(entry, "try");
     CfgNode[] targets = succ(tryEntry, "if (condition)", "x()");
 
@@ -352,7 +370,7 @@ public class StmtCfgTest {
   }
 
   @Test public void filtering01() {
-    CfgNode entry = parseFile("Filtering01");
+    CfgNode entry = parseCfg("Filtering01");
     CfgNode i = succ(entry, "i()");
     CfgNode j = succ(i, "j()");
     CfgNode cond = succ(j, "cond()");
@@ -366,7 +384,7 @@ public class StmtCfgTest {
   }
 
   @Test public void throwStmt01() {
-    CfgNode entry = parseFile("ThrowStmt01");
+    CfgNode entry = parseCfg("ThrowStmt01");
     CfgNode x = succ(entry, "x()");
     CfgNode exception = succ(x, "exception");
     succ(exception, "exit");
@@ -384,7 +402,7 @@ public class StmtCfgTest {
   // caching for NTAs.
 
   @Test public void genTryStmt01() {
-    CfgNode entry = parseFile("GenTryStmt01");
+    CfgNode entry = parseCfg("GenTryStmt01");
     CfgNode tryEntry = succ(entry, "try");
     CfgNode[] targets = succ(tryEntry, "cond()", "c1()", "c2()");
     CfgNode[] targets2 = succ(targets[0], "exception", "if (cond())");
@@ -405,7 +423,7 @@ public class StmtCfgTest {
   }
 
   @Test public void genTryStmt02() {
-    CfgNode entry = parseFile("GenTryStmt02");
+    CfgNode entry = parseCfg("GenTryStmt02");
     CfgNode tryEntry = succ(entry, "try");
     CfgNode[] targets = succ(tryEntry, "tryBlock()", "c2()", "c1()");
     CfgNode[] targets2 = succ(targets[0], "exception", "exit");
@@ -417,7 +435,7 @@ public class StmtCfgTest {
   }
 
   @Test public void genTryStmt03() {
-    CfgNode entry = parseFile("GenTryStmt03");
+    CfgNode entry = parseCfg("GenTryStmt03");
     CfgNode tryEntry = succ(entry, "try");
     CfgNode[] targets = succ(tryEntry, "c1()", "x()");
     CfgNode f = succ(targets[0], "f()");
@@ -429,7 +447,7 @@ public class StmtCfgTest {
 
 
   @Test public void genTryStmt04() {
-    CfgNode entry = parseFile("GenTryStmt04");
+    CfgNode entry = parseCfg("GenTryStmt04");
     CfgNode tryEntry = succ(entry, "try");
     CfgNode[] tryEntrySucc = succ(tryEntry, "if (condition)", "x()");
     CfgNode[] ifBranchSucc = succ(tryEntrySucc[0], "a()", "x()");
@@ -444,7 +462,7 @@ public class StmtCfgTest {
   }
 
   @Test public void genTryStmt05() {
-    CfgNode entry = parseFile("GenTryStmt05");
+    CfgNode entry = parseCfg("GenTryStmt05");
     CfgNode tryEntry = succ(entry, "try");
     CfgNode[] tryEntrySucc = succ(tryEntry, "f2()", "try");
     CfgNode exception = succ(tryEntrySucc[0], "exception");
@@ -463,7 +481,7 @@ public class StmtCfgTest {
   }
 
   @Test public void genTryStmt06() {
-    CfgNode entry = parseFile("GenTryStmt06");
+    CfgNode entry = parseCfg("GenTryStmt06");
     CfgNode tryEntry = succ(entry, "try");
     CfgNode[] tryEntrySucc = succ(tryEntry, "f2()", "try");
     CfgNode exception = succ(tryEntrySucc[0], "exception");
@@ -482,7 +500,7 @@ public class StmtCfgTest {
   }
 
   @Test public void genTryStmt07() {
-    CfgNode entry = parseFile("GenTryStmt07");
+    CfgNode entry = parseCfg("GenTryStmt07");
     CfgNode tryEntry = succ(entry, "try");
     CfgNode[] tryEntrySucc = succ(tryEntry, "c1()", "x()");
     CfgNode returnMarker = succ(tryEntrySucc[0], "return");
@@ -495,7 +513,7 @@ public class StmtCfgTest {
   }
 
   @Test public void genForStmt01() {
-    CfgNode entry = parseFile("GenForStmt01");
+    CfgNode entry = parseCfg("GenForStmt01");
     CfgNode forBranch = succ(entry, "for (i < 100)");
     CfgNode[] forBranchSucc = succ(forBranch, "c()", "fin()");
     CfgNode whileBranch = succ(forBranchSucc[0], "while (c())");
@@ -508,7 +526,7 @@ public class StmtCfgTest {
   }
 
   @Test public void genForStmt02() {
-    CfgNode entry = parseFile("GenForStmt02");
+    CfgNode entry = parseCfg("GenForStmt02");
     CfgNode forBranch = succ(entry, "for (i < 100)");
     CfgNode[] forBranchSucc = succ(forBranch, "c()", "fin()");
     CfgNode whileBranch = succ(forBranchSucc[0], "while (c())");
@@ -521,7 +539,7 @@ public class StmtCfgTest {
   }
 
   @Test public void genClassInstance01() {
-    CfgNode entry = parseFile("GenClassInstance01");
+    CfgNode entry = parseCfg("GenClassInstance01");
     CfgNode p1 = succ(entry, "p1()");
     CfgNode p2 = succ(p1, "p2()");
     CfgNode p3 = succ(p2, "p3()");
@@ -530,7 +548,7 @@ public class StmtCfgTest {
   }
 
   @Test public void genSwitchStmt01() {
-    CfgNode entry = parseFile("GenSwitchStmt01");
+    CfgNode entry = parseCfg("GenSwitchStmt01");
     CfgNode whileBranch = succ(entry, "while (x + y == 400 - z)");
     CfgNode[] whileBranchSucc = succ(whileBranch, "switch (x)", "exit");
     CfgNode[] switchBranchSucc = succ(whileBranchSucc[0], "c3()", "c6()", "while (x + y == 400 - z)", "c1()", "c5()", "break", "c2()", "c4()");
@@ -550,13 +568,13 @@ public class StmtCfgTest {
   }
 
   @Test public void genClassInstance02() {
-    CfgNode entry = parseFile("GenClassInstance02");
+    CfgNode entry = parseCfg("GenClassInstance02");
     CfgNode toString = succ(entry, "toString()");
     CfgNode exit = succ(toString, "exit");
   }
 
   @Test public void genTryWithResources01() {
-    CfgNode entry = parseFile("GenTryWithResources01");
+    CfgNode entry = parseCfg("GenTryWithResources01");
     CfgNode openStream = succ(entry, "openStream()");
     CfgNode[] openStreamSucc = succ(openStream, "exception", "try");
     CfgNode[] exceptionSucc = succ(openStreamSucc[0], "c()", "f()");
@@ -575,7 +593,7 @@ public class StmtCfgTest {
   }
 
   @Test public void genTryWithResources02() {
-    CfgNode entry = parseFile("GenTryWithResources02");
+    CfgNode entry = parseCfg("GenTryWithResources02");
     CfgNode o1 = succ(entry, "o1()");
     CfgNode[] o1Succ = succ(o1, "exception", "o2()");
     CfgNode[] exceptionSucc = succ(o1Succ[0], "c()", "f()");

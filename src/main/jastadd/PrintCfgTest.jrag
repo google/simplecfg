@@ -33,7 +33,7 @@ aspect PrintCfgTest {
     String testName = className.substring(0, 1).toLowerCase()
         + className.substring(1);
     System.out.println("  @Test public void " + testName + "() {");
-    System.out.println("    CfgNode entry = parseFile(\"" + className + "\");");
+    System.out.println("    CfgNode entry = parseCfg(\"" + className + "\");");
     Queue<CfgNode> work = new LinkedList<CfgNode>();
     Set<CfgNode> visited = Collections.newSetFromMap(
         new IdentityHashMap<CfgNode, Boolean>());
