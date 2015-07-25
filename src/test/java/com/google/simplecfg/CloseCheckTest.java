@@ -25,7 +25,6 @@ import com.google.simplecfg.ast.JavaParser;
 import com.google.simplecfg.ast.Program;
 import com.google.simplecfg.ast.SourceFolderPath;
 
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;

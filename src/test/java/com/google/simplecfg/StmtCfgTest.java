@@ -23,7 +23,6 @@ import com.google.simplecfg.ast.JavaParser;
 import com.google.simplecfg.ast.CompilationUnit;
 import com.google.simplecfg.ast.Program;
 
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
