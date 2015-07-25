@@ -18,7 +18,6 @@ package com.google.simplecfg;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;
 
-import com.google.simplecfg.ast.CfgNode;
 import com.google.simplecfg.ast.CompilationUnit;
 import com.google.simplecfg.ast.ExtendJFinding;
 import com.google.simplecfg.ast.FileClassSource;
