@@ -12,7 +12,12 @@ apply plugin: 'java'
 apply plugin: 'application'
 apply plugin: 'jastadd'
 
-repositories.mavenLocal()
+repositories {
+	mavenLocal()
+	flatDir {
+		dirs 'third_party/shipshape'
+	}
+}
 
 // overwrite jastadd2 dependency set by jastaddgradle
 configurations {
@@ -26,6 +31,11 @@ configurations {
 }
 
 dependencies {
+	// TODO(joqvist): Use only the needed transient dependencies from Shipshape,
+	// or even better wait for Shipshape to publish on Maven.
+	// The shipshape dependency is currently a fat jar built from the Shipshape repo.
+	compile name: "java_dispatcher_deploy"
+
 	compile group: 'com.google.guava', name: 'guava', version: '18.0'
 	testCompile group: 'com.google.truth', name: 'truth', version: '0.27'
 }
@@ -57,3 +67,63 @@ jar.destinationDir = projectDir
 
 sourceCompatibility = '1.8'
 targetCompatibility = '1.8'
+
+task deployJar(type: Jar, description: 'Build a docker image for the SimpleCFG based analyzers.') {
+	manifest.attributes 'Main-Class': 'com.google.shipshape.extendj.ExtendJService'
+	baseName = 'deploy_jar'
+	from { configurations.compile.collect {
+		it.isDirectory() ? it : zipTree(it)
+	} }
+	with jar
+}
+
+task('docker', dependsOn: [ 'deployJar' ]) {
+	description 'Build the docker image.'
+
+	inputs.file 'src/main/docker/entrypoint.sh'
+
+	doLast {
+		copy {
+			from 'src/main/docker'
+			into "${temporaryDir}"
+		}
+		copy {
+			from deployJar.destinationDir
+			into "${temporaryDir}"
+			include deployJar.archiveName
+		}
+		def dockerfile = new File(getTemporaryDir(), 'Dockerfile')
+		dockerfile.withWriter('utf-8') { writer ->
+			writer.writeLine 'FROM java:8'
+			writer.writeLine "ADD ${deployJar.archiveName} /java_service.jar"
+			writer.writeLine 'ADD /entrypoint.sh /entrypoint.sh'
+			writer.writeLine 'EXPOSE 10005'
+			writer.writeLine 'ENTRYPOINT ["/entrypoint.sh"]'
+		}
+		tryCommand("docker build -t extendj_shipshape/extendj ${temporaryDir}".split())
+	}
+}
+
+/**
+ * Helper method for running a shell command in a build task.
+ * Returns the command output if the command succeeded, otherwise returns an empty string.
+ */
+def tryCommand(command, failOnError = true) {
+	def out = new StringBuilder()
+	def err = new StringBuilder()
+	def proc = command.execute()
+	proc.waitForProcessOutput(out, err)
+	if (proc.exitValue()) {
+		def msg = "failed to run '${command[0]}' (args: ${command.tail()})\n$err$out"
+		if (failOnError) {
+			throw new GradleException(msg)
+		} else {
+			print 'Warning: '
+			println msg
+		}
+		""
+	} else {
+		if (err) println "${err}"
+		out.toString()
+	}
+}
