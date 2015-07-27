@@ -1,14 +1,16 @@
-Simple CFG ExtendJ Module
-=========================
+Simple CFG module for ExtendJ
+=============================
 
 This is a Control Flow Graph (CFG) module for the ExtendJ compiler for building
 simplified CFGs. This module builds CFGs for Java methods where only branches
 and method calls have are included.  These simple CFGs provide enough
 information to perform intraprocedural static analyses on Java code.
 
-This repository also includes a sample analyzer which checks if there are
-additional calls to a java.io.Reader/java.io.Writer after `close()` was called
-on the same instance.
+This repository also includes two sample Java static analyzers based on the this
+CFG module.  One analyzer checks for additional calls to a
+java.io.Reader/java.io.Writer after `close()` was called on the same instance.
+The other analyzer checks for potential `null` dereferences on paramters
+annotated with javax.annotation.Nullable.
 
 Disclaimer
 ----------
