@@ -27,25 +27,25 @@ import java.util.Collection;
 @RunWith(JUnit4.class)
 public class NullableDereferenceTest {
 
-  @Test public void test01() {
-    Collection<String> findings = StmtCfgTest.findings("Nullable01");
+  @Test public void nullGuard01() {
+    Collection<String> findings = StmtCfgTest.findings("NullableNullGuard01");
     assertThat(findings).containsExactly(
-        "Nullable01:39:25: Dereferencing p, which was declared @Nullable.",
-        "Nullable01:46:12: Dereferencing p, which was declared @Nullable.",
-        "Nullable01:59:12: Dereferencing p, which was declared @Nullable."
+        "NullableNullGuard01:42:25: Dereferencing p, which was declared @Nullable.",
+        "NullableNullGuard01:49:12: Dereferencing p, which was declared @Nullable.",
+        "NullableNullGuard01:62:12: Dereferencing p, which was declared @Nullable."
         );
   }
 
-  @Test public void test02() {
-    Collection<String> findings = StmtCfgTest.findings("Nullable02");
+  @Test public void nullGuard02() {
+    Collection<String> findings = StmtCfgTest.findings("NullableNullGuard02");
     assertThat(findings).containsExactly(
-        "Nullable02:44:7: Dereferencing p, which was declared @Nullable.",
-        "Nullable02:49:7: Dereferencing p, which was declared @Nullable."
+        "NullableNullGuard02:49:7: Dereferencing p, which was declared @Nullable.",
+        "NullableNullGuard02:54:7: Dereferencing p, which was declared @Nullable."
         );
   }
 
   @Test public void test03() {
-    Collection<String> findings = StmtCfgTest.findings("Nullable03");
+    Collection<String> findings = StmtCfgTest.findings("NullableMethodNullGuard01");
     assertThat(findings).isEmpty();
   }
 }

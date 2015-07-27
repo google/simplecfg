@@ -18,14 +18,19 @@
  * StmtCfgTest builds and tests the CFG for the first block/method in this class.
  */
 import javax.annotation.Nullable;
-class Nullable02 {
+
+/**
+ * More complex conditional null guards.
+ */
+class NullableNullGuard02 {
   void f1(@Nullable Test p) {
-    if (p == null) return;
+    if (false || p == null) return;
     p.x = true; // negative
   }
   void f2(@Nullable Test p, Text n) {
-    if (p == null && n == null) return;
-    p.x = true; // negative
+    while (p != null && n == null) {
+      p.x = true; // negative
+    }
   }
   void f3(@Nullable Test p, Text n) {
     if (p == null || false) return;
@@ -36,7 +41,7 @@ class Nullable02 {
     p.x = true; // negative
   }
   void f4(@Nullable Test p, Text n) {
-    if (p == null || n == null) return;
+    for (; p == null || n == null; ) return;
     p.x = true; // negative
   }
   void f5(@Nullable Test p, Text n) {

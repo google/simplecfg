@@ -19,7 +19,10 @@
  */
 import javax.annotation.Nullable;
 
-public class Test {
+/**
+ * Test nullable dereferences guarded/not guarded by null checks.
+ */
+public class Nullable01 {
   boolean x = false;
   void f1(@Nullable Test p) {
     if (p != null) {
@@ -60,5 +63,18 @@ public class Test {
       if (p == null) continue;
       p.x = false; // negative
     }
+  }
+  void f7(@Nullable Test p) {
+    while (p == null) {
+    }
+    p.x = false; // Negative: not reachable.
+  }
+  void f8(@Nullable Test p) {
+    while (p == null) {
+      if (System.currentTimeMillis() & 1 == 0) {
+        return;
+      }
+    }
+    p.x = false; // Negative.
   }
 }

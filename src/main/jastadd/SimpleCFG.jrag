@@ -287,8 +287,7 @@ aspect SimpleCFG {
    */
   syn Set<? extends CfgNode> TryStmt.catchBranches() {
     // Check for catch-all clauses (catching java.lang.Throwable).
-    Set<CfgNode> set = Collections.newSetFromMap(
-        new IdentityHashMap<CfgNode, Boolean>());
+    Set<CfgNode> set = Collections.newSetFromMap(new IdentityHashMap<CfgNode, Boolean>());
     for (CatchClause clause : getCatchClauseList()) {
       set.add(clause.getBlock().entry());
       if (clause instanceof BasicCatch

@@ -14,7 +14,27 @@
  * limitations under the License.
  */
 
-/** Adds an analysis that checks for dereferences of a parameter declared nullable. */
+/**
+ * Adds an analysis that checks for dereferences of a parameter declared nullable.
+ * <p>
+ * When a method or constructor parameter is annotated with javax.annotation.Nullable,
+ * we check that all dereferences of that parameter are guarded by a null-check. The
+ * analysis is control-flow sensitive in that it will recognize if all control flow paths
+ * to the dereference are effectively guarded by a null check, for example: {@code
+ * if (p == null) return;
+ * p.x(); // Guarded by null check above.
+ * }
+ * <p>
+ * The analysis also assumes that a method call to {@code checkNotNull}, or {@code isNotNull}
+ * will also work as a null guard. There are more possible variations of methods guarding against
+ * nullness that could be considered, but currently we only check for these methods:
+ * <ul>
+ * <li>{@code checkNotNull}, {@code checkNonNull}: assume that any control flow path following this
+ * call with the analyzed parameter as the single argument are safe for dereferencing that parameter
+ * <li>{@code isNotNull}, {@code isNonNull}: assume that calls to methods with names that start with
+ * these prefixes guard the single argument against nullness
+ * </ul>
+ */
 aspect NullableAnalysis {
   refine CloseAnalysis
   protected void Program.initializeLibraryTypes(Map<String, TypeDecl> libs) {
@@ -24,7 +44,7 @@ aspect NullableAnalysis {
     addPlaceholderType(libs, "javax.annotation", "Nullable");
   }
 
-  // Give ParameterDeclaration access to the inherited comilationUnit attribute.
+  // Give ParameterDeclaration access to the inherited compilationUnit attribute.
   inh CompilationUnit ParameterDeclaration.compilationUnit();
 
   ParameterDeclaration contributes nullableDereferenceFinding()
@@ -99,7 +119,7 @@ aspect NullableAnalysis {
   }
 
   /**
-   * Returns the receiver expression if the CFG node is the child of a dereferece expression.
+   * Returns the receiver expression if the CFG node is the child of a dereference expression.
    * Returns {@code null} otherwise.
    */
   inh Expr CfgNode.receiverExpr();
@@ -161,25 +181,33 @@ aspect NullableAnalysis {
   }
 
   /** Check if this branch has a null-guarding condition.  */
-  eq CfgBranch.isNullGuard(Variable var, CfgNode succ) = inhNullGuard(var, succ);
+  eq CfgBranch.isNullGuard(Variable var, CfgNode succ) = inNullGuard(var, succ);
 
-  inh boolean CfgBranch.inhNullGuard(Variable var, CfgNode succ);
+  inh boolean CfgBranch.inNullGuard(Variable var, CfgNode succ);
 
-  eq IfStmt.branch().inhNullGuard(Variable var, CfgNode succ) =
+  eq IfStmt.branch().inNullGuard(Variable var, CfgNode succ) =
       succ == getThen().entry()
       ? getCondition().isNonNullTest(var)
       : getCondition().isNullTest(var);
 
-  eq ConditionalExpr.branch().inhNullGuard(Variable var, CfgNode succ) =
+  eq ConditionalExpr.branch().inNullGuard(Variable var, CfgNode succ) =
       succ == getTrueExpr().entry()
       ? getCondition().isNonNullTest(var)
       : getCondition().isNullTest(var);
 
-  eq ForStmt.branch().inhNullGuard(Variable var, CfgNode succ) = false;
-  eq EnhancedForStmt.branch().inhNullGuard(Variable var, CfgNode succ) = false;
-  eq WhileStmt.branch().inhNullGuard(Variable var, CfgNode succ) = false;
-  eq DoStmt.branch().inhNullGuard(Variable var, CfgNode succ) = false;
-  eq SwitchStmt.branch().inhNullGuard(Variable var, CfgNode succ) = false;
+  eq ForStmt.branch().inNullGuard(Variable var, CfgNode succ) =
+      succ == getCondition().follow()
+      ? getCondition().isNonNullTest(var)
+      : getCondition().isNullTest(var);
+
+  eq WhileStmt.branch().inNullGuard(Variable var, CfgNode succ) =
+      succ == getCondition().follow()
+      ? getCondition().isNonNullTest(var)
+      : getCondition().isNullTest(var);
+
+  eq EnhancedForStmt.branch().inNullGuard(Variable var, CfgNode succ) = false;
+  eq DoStmt.branch().inNullGuard(Variable var, CfgNode succ) = false;
+  eq SwitchStmt.branch().inNullGuard(Variable var, CfgNode succ) = false;
 
   /** Returns {@code true} if this set of modifiers includes {@code javax.annotation.Nullable}.  */
   syn boolean Modifiers.hasNullableAnnotation() = hasAnnotation("javax.annotation", "Nullable");
