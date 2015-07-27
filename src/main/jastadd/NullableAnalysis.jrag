@@ -52,13 +52,6 @@
  * dereferenced.
  */
 aspect NullableAnalysis {
-  refine CloseAnalysis
-  protected void Program.initializeLibraryTypes(Map<String, TypeDecl> libs) {
-    refined(libs);
-
-    // Inspected types.
-    addPlaceholderType(libs, "javax.annotation", "Nullable");
-  }
 
   // Give ParameterDeclaration access to the inherited compilationUnit attribute.
   inh CompilationUnit ParameterDeclaration.compilationUnit();
@@ -177,8 +170,6 @@ aspect NullableAnalysis {
       ? refined()
       : nullableDereferenceMarker();
 
-  eq AbstractDot.nullableDereferenceMarker().markerName() = "nullable access";
-  eq AbstractDot.nullableDereferenceMarker().markerVarName() = "nullable";
   eq AbstractDot.nullableDereferenceMarker().succ() = Collections.singleton(getRight().entry());
 
   syn boolean CfgNode.isNullGuard(Variable var, CfgNode succ) = false;

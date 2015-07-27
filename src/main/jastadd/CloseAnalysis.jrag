@@ -16,16 +16,6 @@
 
 aspect CloseAnalysis {
 
-  // Adds java.io.Writer, java.io.Reader as inspected types.
-  refine ClassPathFilter
-  protected void Program.initializeLibraryTypes(Map<String, TypeDecl> libs) {
-    refined(libs);
-
-    // Inspected types.
-    addPlaceholderType(libs, "java.io", "Writer");
-    addPlaceholderType(libs, "java.io", "Reader");
-  }
-
   MethodAccess contributes alreadyClosedFinding()
       when alreadyClosedStream()
       to CompilationUnit.findings()

@@ -137,4 +137,5 @@ aspect PrintCfg {
   eq ReturnStmt.marker().markerName() = "return";
   eq TryStmt.tryEntryMarker().markerName() = "try";
   eq Program.getChild().markerName() = "marker";
+  eq AbstractDot.nullableDereferenceMarker().markerName() = "nullable access";
 }

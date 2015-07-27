@@ -26,9 +26,9 @@ import java.util.LinkedList;
 aspect Findings {
   /** Collection of API usage findings.  */
   coll Collection<ExtendJFinding> CompilationUnit.findings()
-    [new LinkedList<ExtendJFinding>()]
-    with add
-    root CompilationUnit;
+      [new LinkedList<ExtendJFinding>()]
+      with add
+      root CompilationUnit;
 
   /** Build a new finding with the given subcategory and message.  */
   syn ExtendJFinding ASTNode.finding(String subcategory, String message) {
@@ -65,24 +65,24 @@ aspect Findings {
   /** A finding produced by an ExtendJ analyzer.  */
   public class ExtendJFinding {
 
-    protected final String sourcePath;
-    protected final String subcategory;
-    protected final String message;
-    protected final int startLine;
-    protected final int startColumn;
-    protected final int endLine;
-    protected final int endColumn;
-    protected Collection<ExtendJFix> fixes = Lists.newArrayList();
+    public final String sourcePath;
+    public final String subcategory;
+    public final String message;
+    public final int startLine;
+    public final int startColumn;
+    public final int endLine;
+    public final int endColumn;
+    public final Collection<ExtendJFix> fixes = Lists.newArrayList();
 
     /**
      * Describes a suggested fix. The suggested fix has a description which does not seem to
      * show up in Critique. The new text should end with a newline.
      */
-    protected static class ExtendJFix {
-      final String description;
-      final int startLine;
-      final int endLine;
-      final String newText;
+    public static class ExtendJFix {
+      public final String description;
+      public final int startLine;
+      public final int endLine;
+      public final String newText;
 
       ExtendJFix(String description, int startLine, int endLine, String newText) {
         this.description = description;

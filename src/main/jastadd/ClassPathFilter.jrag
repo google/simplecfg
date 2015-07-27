@@ -83,6 +83,13 @@ aspect ClassPathFilter {
     addPlaceholderType(libs, "java.lang", "String");
     addPlaceholderType(libs, "java.lang", "Boolean");
     addPlaceholderType(libs, "java.lang", "Void");
+
+    // Types needed for read/write after close analysis.
+    addPlaceholderType(libs, "java.io", "Writer");
+    addPlaceholderType(libs, "java.io", "Reader");
+
+    // Types needed for Nullable Dereference analysis.
+    addPlaceholderType(libs, "javax.annotation", "Nullable");
   }
 
   refine LookupType
