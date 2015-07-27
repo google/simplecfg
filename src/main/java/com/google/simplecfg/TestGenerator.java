@@ -35,7 +35,7 @@ class TestGenerator {
       @Override
       public CompilationUnit parse(java.io.InputStream is, String fileName)
           throws java.io.IOException, beaver.Parser.Exception {
-        return new parser.JavaParser().parse(is, fileName);
+        return new com.google.simplecfg.parser.JavaParser().parse(is, fileName);
       }
     };
   }

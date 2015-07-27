@@ -16,9 +16,43 @@
 
 include("third_party/extendj/git/modules")
 
+// Custom version of the Java 8 frontend without JavaScanner (compile error due to moved class).
+module("java8 frontend mod") {
+	moduleName "Java SE 8"
+	moduleVariant "frontend"
+
+	def java8 = "third_party/extendj/git/java8"
+
+	imports "java7 frontend"
+
+	jastadd {
+		basedir java8
+		include "grammar/*.ast"
+		include "frontend/*.jadd"
+		include "frontend/*.jrag"
+
+		exclude "frontend/FrontendMain.jrag"
+		excludeFrom "java5 frontend", "frontend/BytecodeReader.jrag"
+		excludeFrom "java7 frontend", "frontend/Variable.jadd"
+	}
+
+	scanner {
+		basedir java8
+		include "scanner/Preamble.flex", [-3]
+		include "scanner/Separators.flex"
+		include "scanner/Operators.flex"
+
+		excludeFrom "java4 frontend", "scanner/Preamble.flex"
+	}
+
+	parser {
+		include "${java8}/parser/*"
+	}
+}
+
 module("simplecfg") {
 
-	imports "java8 frontend"
+	imports "java8 frontend mod"
 
 	jastadd {
 		basedir "src/main/jastadd/"
@@ -30,11 +64,11 @@ module("simplecfg") {
 	java {
 		basedir "src/main/java/"
 		include "**/*.java"
+	}
 
-		// Exclude ExtendJ main classes (we provide our own).
-		exclude "third_party/extendj/frontend/org/jastadd/extendj/*"
-		exclude "third_party/extendj/backend/org/jastadd/extendj/*"
-		exclude "third_party/extendj/JavaCompiler.java"
+	scanner {
+		include "src/main/scanner/Header.flex", [-4]
+		excludeFrom "java4 frontend", "scanner/Header.flex"
 	}
 
 	parser {

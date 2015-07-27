@@ -1,4 +1,4 @@
 %header {:
- package parser;
+ package com.google.simplecfg.parser;
  import com.google.simplecfg.ast.*;
 :};

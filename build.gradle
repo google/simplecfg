@@ -39,6 +39,14 @@ jastadd {
 	parser.name = 'JavaParser'
 }
 
+generateJava << {
+	ant.copy file: file('third_party/extendj/git/java8/src/scanner/JavaScanner.java'),
+		todir: file('src/gen/java/scanner')
+	ant.replace file: file('src/gen/java/scanner/JavaScanner.java'),
+		token: 'parser.JavaParser',
+		value: 'com.google.simplecfg.parser.JavaParser'
+}
+
 test {
 	inputs.dir file('testdata')
 }
