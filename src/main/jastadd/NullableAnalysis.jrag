@@ -34,6 +34,16 @@
  * <li>{@code isNotNull}, {@code isNonNull}: assume that calls to methods with names that start with
  * these prefixes guard the single argument against nullness
  * </ul>
+ * <p>
+ * To find potential null dereferences on nullable parameters, the analysis does a forward CFG
+ * traversal from the entry-point of the method. Note that this is only done whenever a
+ * {@code @Nullable} parameter has been encountered in the method. The traversal explores all paths
+ * from the method entry until it finds null guard statement such as {@code if (p != null)}. The
+ * branches that are protected from nullness get pruned in the search and the search continues on
+ * other branches. The search is performed by a {@code NullDereferenceLocator}, which implements the
+ * {@code CfgSearch} interface. This visitor is invoked for each node in the CFG search, and it
+ * decides if the search will continue from that node, or if the current edge should be skipped
+ * (i.e., pruned).
  */
 aspect NullableAnalysis {
   refine CloseAnalysis

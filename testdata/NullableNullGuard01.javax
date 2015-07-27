@@ -22,7 +22,7 @@ import javax.annotation.Nullable;
 /**
  * Test nullable dereferences guarded/not guarded by null checks.
  */
-public class Nullable01 {
+public class NullableNullGuard01 {
   boolean x = false;
   void f1(@Nullable Test p) {
     if (p != null) {

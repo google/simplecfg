@@ -23,7 +23,12 @@ import org.junit.runners.JUnit4;
 
 import java.util.Collection;
 
-/** Integration tests for the nullable dereference checker. */
+/**
+ * Integration tests for the nullable dereference checker.
+ * <p>
+ * Tests are grouped by the type of null guard used, and then split arbitrarily into separate
+ * tests/files in order to not have too many positive/negative finding tests in a single test file.
+ */
 @RunWith(JUnit4.class)
 public class NullableDereferenceTest {
 
