@@ -18,6 +18,12 @@ Disclaimer
 This is not an official Google product (experimental or otherwise), it is just
 code that happens to be owned by Google.
 
+Shipshape Module
+----------------
+
+The demo analyzers can be plugged into the [Shipshape][1] pipeline. The
+Shipshape integration is currently experimental.
+
 Dependencies
 ------------
 
@@ -52,3 +58,5 @@ each node in the resulting CFG for the single block/method in each of the Java f
 
 You can generate images for the CFGs in each test file by running the `graph.sh`
 shell script.
+
+[1]: https://github.com/google/shipshape
