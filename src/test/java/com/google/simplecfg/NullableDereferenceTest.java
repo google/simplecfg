@@ -49,8 +49,16 @@ public class NullableDereferenceTest {
         );
   }
 
-  @Test public void test03() {
+  @Test public void methodNullGuard01() {
     Collection<String> findings = StmtCfgTest.findings("NullableMethodNullGuard01");
     assertThat(findings).isEmpty();
+  }
+
+  @Test public void dataflowFalsePositives01() {
+    Collection<String> findings = StmtCfgTest.findings("NullableDataflow01");
+    assertThat(findings).containsExactly(
+        "NullableDataflow01:31:7: Dereferencing p, which was declared @Nullable.",
+        "NullableDataflow01:38:7: Dereferencing p, which was declared @Nullable."
+        );
   }
 }
