@@ -30,7 +30,7 @@
  * nullness that could be considered, but currently we only check for these methods:
  * <ul>
  * <li>{@code checkNotNull}, {@code checkNonNull}: assume that any control flow path following this
- * call with the analyzed parameter as the single argument are safe for dereferencing that parameter
+ * call with the analyzed parameter as the first argument are safe for dereferencing that parameter
  * <li>{@code isNotNull}, {@code isNonNull}: assume that calls to methods with names that start with
  * these prefixes guard the single argument against nullness
  * </ul>
@@ -228,7 +228,7 @@ aspect NullableAnalysis {
     }
     MethodAccess access = methodAccess();
     return (access.name().equals("checkNotNull") || access.name().equals("checkNonNull"))
-        && access.getNumArg() == 1 && access.getArg(0).isVariable(var);
+        && access.getNumArg() >= 1 && access.getArg(0).isVariable(var);
   }
 
   /** Check if this branch has a null-guarding condition.  */
