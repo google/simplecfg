@@ -14,6 +14,14 @@
  * limitations under the License.
  */
 
+/**
+ * Adds an analysis checking for calls to an instance of java.io.Writer or java.io.Reader after
+ * {@code close()} has been called on the same instance.
+ * <p>
+ * For each method call to an effectively final variable of type java.io.Reader or java.io.Writer,
+ * we do a breadth-first search on the reverse CFG from the location of that call to see if a
+ * call to {@code close()} was made on the same instance previously.
+ */
 aspect CloseAnalysis {
 
   MethodAccess contributes alreadyClosedFinding()
