@@ -50,6 +50,9 @@
  * a CfgMarker on AbstractDot (which represents Java dot expressions). This marker node appears
  * in the CFG as "nullable access" because it is inserted whenever a nullable variable is
  * dereferenced.
+ * <p>
+ * Dataflow analysis is not used, so in order to analyze a parameter it is required to be
+ * effectively final, i.e. it is not assigned anywhere in side the body of the method/constructor.
  */
 aspect NullableAnalysis {
 
