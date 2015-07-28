@@ -27,36 +27,48 @@ class NullableNullGuard02 {
     if (false || p == null) return;
     p.x = true; // negative
   }
-  void f2(@Nullable Test p, Text n) {
+  void f2(@Nullable Test p, String n) {
     while (p != null && n == null) {
       p.x = true; // negative
     }
   }
-  void f3(@Nullable Test p, Text n) {
+  void f3(@Nullable Test p, String n) {
     if (p == null || false) return;
     p.x = true; // negative
   }
-  void f4(@Nullable Test p, Text n) {
+  void f4(@Nullable Test p, String n) {
     if (p == null || n == null) return;
     p.x = true; // negative
   }
-  void f4(@Nullable Test p, Text n) {
+  void f4(@Nullable Test p, String n) {
     for (; p == null || n == null; ) return;
     p.x = true; // negative
   }
-  void f5(@Nullable Test p, Text n) {
+  void f5(@Nullable Test p, String n) {
     if (p != null || n == null) {
       p.x = true; // positive
     }
   }
-  void f6(@Nullable Test p, Text n) {
+  void f6(@Nullable Test p, String n) {
     if (p != null || n == null) {
       p.x = true; // positive
     }
   }
-  void f7(@Nullable Test p, Text n) {
+  void f7(@Nullable Test p, String n) {
     if (p != null || false) {
       p.x = true; // negative
     }
+  }
+
+  boolean f8(@Nullable Test p, String n) {
+    return p != null && p.x; // Negative.
+  }
+
+  boolean f9(@Nullable Test p, String n) {
+    return p != null && (n == null || p.x); // Negative.
+  }
+
+  boolean f10(@Nullable Test p, String n) {
+    return p == null || (n == null || p.x); // Negative.
   }
 }

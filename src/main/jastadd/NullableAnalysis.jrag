@@ -229,9 +229,9 @@ aspect NullableAnalysis {
   eq ConditionalExpr.getTrueExpr().hasNullGuard(Variable var) = getCondition().isNonNullTest(var);
   eq ConditionalExpr.getFalseExpr().hasNullGuard(Variable var) = getCondition().isNullTest(var);
   eq AndLogicalExpr.getRightOperand().hasNullGuard(Variable var) =
-      getLeftOperand().isNonNullTest(var);
+      getLeftOperand().isNonNullTest(var) || hasNullGuard(var);
   eq OrLogicalExpr.getRightOperand().hasNullGuard(Variable var) =
-      getLeftOperand().isNullTest(var);
+      getLeftOperand().isNullTest(var) || hasNullGuard(var);
 
   syn boolean Expr.isNullTest(Variable var) = false;
   eq EQExpr.isNullTest(Variable var) =
