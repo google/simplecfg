@@ -80,8 +80,49 @@ aspect NullableAnalysis {
     if (location == null) {
       return null;
     }
-    return location.finding("NullableDereference", String.format(
+    ExtendJFinding finding = location.finding("NullableDereference", String.format(
         "Dereferencing %s, which was declared @Nullable.", name()));
+    if (compilationUnit().fromSource()) {
+      ASTNode modifierLocation = nullableModifierLocation();
+      int line = getLine(modifierLocation.getStart());
+      int startCol = getColumn(modifierLocation.getStart());
+      int endCol = getColumn(modifierLocation.getEnd());
+      if (startCol < endCol && line == getLine(modifierLocation.getEnd())) {
+        try {
+          InputStream data = compilationUnit().getClassSource().openInputStream();
+          java.util.Scanner scanner = new java.util.Scanner(data);
+          for (int i = 1; i < line && scanner.hasNextLine(); ++i) {
+            scanner.nextLine();
+          }
+          if (scanner.hasNextLine()) {
+            String text = scanner.nextLine();
+            finding.addFix("Remove the @Nullable annotation.",
+                line, line,
+                text.substring(0,startCol-1) + text.substring(endCol+1));
+          }
+        } catch (IOException e) {
+          // Failed to unparse the current line.
+          // This is not a serious problem; we just don't give a fix suggestion.
+        }
+      }
+    }
+    return finding;
+  }
+
+  /**
+   * Find the location node for the javax.annotation.Nullable annotation in the modifier list.
+   * Returns {@code null} if the location of the modifier was not found.
+   */
+  syn ASTNode ParameterDeclaration.nullableModifierLocation() =
+      getModifiers().nullableModifierLocation();
+
+  syn ASTNode Modifiers.nullableModifierLocation() {
+    for (Modifier modifier : getModifierList()) {
+      if (modifier.isAnnotation("javax.annotation", "Nullable")) {
+        return modifier.locationNode();
+      }
+    }
+    return null;
   }
 
   /**
