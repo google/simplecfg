@@ -98,7 +98,7 @@ public class ExtendJAnalyzerFrontend extends Frontend {
   @Override
   public int run(String[] args, BytecodeReader reader, JavaParser parser) {
     program.resetStatistics();
-    program.setTypeLookupFilter(Program.LIBRARY_TYPE_FILTER);
+    program.setTypeLookupFilter(Program.ANALYZER_TYPE_FILTER);
     program.initBytecodeReader(reader);
     program.initJavaParser(parser);
 

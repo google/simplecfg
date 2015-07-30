@@ -77,7 +77,7 @@ aspect ClassPathFilter {
   };
 
   /** This type filter filters out library types. */
-  public static final TypeLookupFilter Program.LIBRARY_TYPE_FILTER = new TypeLookupFilter() {
+  public static final TypeLookupFilter Program.BASE_LIBRARY_FILTER = new TypeLookupFilter() {
     @Override
     public void initializeSourceTypeMap(Program program) {
     }
@@ -125,13 +125,6 @@ aspect ClassPathFilter {
       program.addPlaceholderType("java.lang", "String");
       program.addPlaceholderType("java.lang", "Boolean");
       program.addPlaceholderType("java.lang", "Void");
-
-      // Types needed for read/write after close analysis.
-      program.addPlaceholderType("java.io", "Writer");
-      program.addPlaceholderType("java.io", "Reader");
-
-      // Types needed for Nullable Dereference analysis.
-      program.addPlaceholderType("javax.annotation", "Nullable");
     }
 
     @Override
@@ -148,6 +141,35 @@ aspect ClassPathFilter {
         program.libraryTypeMap.put(fullName, program.unknownType());
         return program.unknownType();
       }
+    }
+  };
+
+  public static final TypeLookupFilter Program.ANALYZER_TYPE_FILTER = new TypeLookupFilter() {
+    @Override
+    public void initializeSourceTypeMap(Program program) {
+      BASE_LIBRARY_FILTER.initializeSourceTypeMap(program);
+    }
+
+    @Override
+    public void initializeLibraryTypeMap(Program program) {
+      BASE_LIBRARY_FILTER.initializeLibraryTypeMap(program);
+
+      // Types needed for read/write after close analysis.
+      program.addPlaceholderType("java.io", "Writer");
+      program.addPlaceholderType("java.io", "Reader");
+
+      // Types needed for Nullable Dereference analysis.
+      program.addPlaceholderType("javax.annotation", "Nullable");
+    }
+
+    @Override
+    public TypeDecl lookupSourceType(Program program, String packageName, String typeName) {
+      return BASE_LIBRARY_FILTER.lookupSourceType(program, packageName, typeName);
+    }
+
+    @Override
+    public TypeDecl lookupLibraryType(Program program, String packageName, String typeName) {
+      return BASE_LIBRARY_FILTER.lookupLibraryType(program, packageName, typeName);
     }
   };
 
