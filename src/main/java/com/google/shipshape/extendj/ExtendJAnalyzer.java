@@ -67,7 +67,7 @@ public class ExtendJAnalyzer extends StatelessAnalyzer {
       } catch (Throwable e) {
         throw new AnalyzerException(CATEGORY, context,
             String.format("Failed to analyze file %s: %s",
-                path, e.getMessage()));
+                path, e.getMessage()), e);
       }
     }
     return ImmutableList.copyOf(findings);

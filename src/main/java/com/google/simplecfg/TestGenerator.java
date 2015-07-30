@@ -19,26 +19,14 @@ import com.google.simplecfg.ast.Program;
 import com.google.simplecfg.ast.Frontend;
 import com.google.simplecfg.ast.CompilationUnit;
 import com.google.simplecfg.ast.BytecodeParser;
-import com.google.simplecfg.ast.JavaParser;
 import com.google.simplecfg.ast.BodyDecl;
 import com.google.simplecfg.ast.TypeDecl;
+import com.google.simplecfg.parser.JavaParser;
 
 import java.io.FileInputStream;
 
 /** Generate test cases for the first CFG of each input class. */
 class TestGenerator {
-
-  private final JavaParser javaParser;
-
-  public TestGenerator() {
-    javaParser = new JavaParser() {
-      @Override
-      public CompilationUnit parse(java.io.InputStream is, String fileName)
-          throws java.io.IOException, beaver.Parser.Exception {
-        return new com.google.simplecfg.parser.JavaParser().parse(is, fileName);
-      }
-    };
-  }
 
   public static void main(String args[]) {
     int exitCode = new TestGenerator().run(args);
@@ -51,7 +39,7 @@ class TestGenerator {
     for (String path : args) {
       try {
         Program program = new Program();
-        CompilationUnit unit = javaParser.parse(new FileInputStream(path), path);
+        CompilationUnit unit = new JavaParser().parse(new FileInputStream(path), path);
         // Attach the parsed unit to a program node so we have a healthy AST.
         program.addCompilationUnit(unit);
         // Ensure compilation unit is set to final. This is important to get

@@ -50,7 +50,6 @@ public class ShipshapeFindingAdapter {
    * @param pathPrefix The prefix that is stripped from the ExtendJ findings path to build a
    *     project-relative path.
    * @return A Shipshape finding built from the ExtendJ finding.
-
    */
   public static Note adapt(ExtendJFinding finding, ShipshapeContext context, String pathPrefix) {
     String path = finding.sourcePath.substring(pathPrefix.length());

@@ -23,6 +23,8 @@ import com.google.simplecfg.ast.Frontend;
 import com.google.simplecfg.ast.JavaParser;
 import com.google.simplecfg.ast.Program;
 
+import java.io.InputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -35,6 +37,19 @@ public class ExtendJAnalyzerFrontend extends Frontend {
   private final JavaParser javaParser;
   private final BytecodeParser bytecodeParser;
   private final Collection<ExtendJFinding> findings = new ArrayList<ExtendJFinding>();
+
+  /** Create new analyzer instance.  */
+  public ExtendJAnalyzerFrontend() {
+    super("ExtendJ Analyzer", "v1.0");
+    javaParser = new JavaParser() {
+      @Override
+      public CompilationUnit parse(InputStream is, String fileName)
+          throws IOException, beaver.Parser.Exception {
+        return new com.google.simplecfg.parser.JavaParser().parse(is, fileName);
+      }
+    };
+    bytecodeParser = new BytecodeParser();
+  }
 
   /**
    * Returns the list of findings from the analyzed source files.
@@ -58,19 +73,6 @@ public class ExtendJAnalyzerFrontend extends Frontend {
     return checker.findings;
   }
 
-  /** Create new analyzer instance.  */
-  public ExtendJAnalyzerFrontend() {
-    super("ExtendJ Analyzer", "v1.0");
-    javaParser = new JavaParser() {
-      @Override
-      public CompilationUnit parse(java.io.InputStream is, String fileName)
-        throws java.io.IOException, beaver.Parser.Exception {
-        return new com.google.simplecfg.parser.JavaParser().parse(is, fileName);
-      }
-    };
-    bytecodeParser = new BytecodeParser();
-  }
-
   /**
    * Run the Java checker.
    * @param args command-line arguments
@@ -92,8 +94,8 @@ public class ExtendJAnalyzerFrontend extends Frontend {
   public int run(String[] args, BytecodeReader reader, JavaParser parser) {
     program.resetStatistics();
     program.setTypeLookupFilter(Program.ANALYZER_TYPE_FILTER);
-    program.initBytecodeReader(reader);
-    program.initJavaParser(parser);
+    program.initBytecodeReader(bytecodeParser);
+    program.initJavaParser(javaParser);
 
     initOptions();
     int argResult = processArgs(args);
@@ -101,18 +103,24 @@ public class ExtendJAnalyzerFrontend extends Frontend {
       return argResult;
     }
 
-    Collection<String> files = program.options().files();
     if (program.options().hasOption("-version")) {
       printVersion();
       return EXIT_SUCCESS;
     }
+
+    Collection<String> files = program.options().files();
     if (program.options().hasOption("-help") || files.isEmpty()) {
       printUsage();
       return EXIT_SUCCESS;
     }
 
+    return run(files);
+  }
+
+  private int run(Collection<String> files) {
     try {
       for (String file : files) {
+        // Calling addSourceFile will parse the file and add it to the program AST.
         program.addSourceFile(file);
       }
 
@@ -135,11 +143,6 @@ public class ExtendJAnalyzerFrontend extends Frontend {
       if (compileResult != EXIT_SUCCESS) {
         return compileResult;
       }
-    } catch (Throwable t) {
-      System.err.println("Errors:");
-      System.err.println("Fatal exception:");
-      t.printStackTrace(System.err);
-      return EXIT_UNHANDLED_ERROR;
     } finally {
       if (program.options().hasOption("-profile")) {
         program.printStatistics(System.out);

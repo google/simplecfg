@@ -23,7 +23,7 @@ import com.google.simplecfg.ast.ExtendJFinding;
 public class ExtendJAnalyzerMain {
 
   /**
-   * Entry point.
+   * Run the ExtendJ analyzer on the files supplied on the command line.
    * @param args command-line arguments
    */
   public static void main(String[] args) {

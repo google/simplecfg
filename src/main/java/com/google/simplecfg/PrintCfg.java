@@ -19,9 +19,9 @@ import com.google.simplecfg.ast.Program;
 import com.google.simplecfg.ast.Frontend;
 import com.google.simplecfg.ast.CompilationUnit;
 import com.google.simplecfg.ast.BytecodeParser;
-import com.google.simplecfg.ast.JavaParser;
 import com.google.simplecfg.ast.BodyDecl;
 import com.google.simplecfg.ast.TypeDecl;
+import com.google.simplecfg.parser.JavaParser;
 
 import java.io.FileInputStream;
 import java.util.Set;
@@ -31,18 +31,6 @@ import java.util.HashSet;
  * Prints a Simplified Control Flow Graph for the first method in a Java program.
  */
 public class PrintCfg {
-
-  private final JavaParser javaParser;
-
-  public PrintCfg() {
-    javaParser = new JavaParser() {
-      @Override
-      public CompilationUnit parse(java.io.InputStream is, String fileName)
-          throws java.io.IOException, beaver.Parser.Exception {
-        return new com.google.simplecfg.parser.JavaParser().parse(is, fileName);
-      }
-    };
-  }
 
   public static void main(String args[]) {
     int exitCode = new PrintCfg().run(args);
@@ -61,7 +49,7 @@ public class PrintCfg {
       if (!path.equals("-reverse")) {
         try {
           Program program = new Program();
-          CompilationUnit unit = javaParser.parse(new FileInputStream(path), path);
+          CompilationUnit unit = new JavaParser().parse(new FileInputStream(path), path);
           // Attach the parsed unit to a program node so we have a healthy AST.
           program.addCompilationUnit(unit);
           // Ensure compilation unit is set to final. This is important to get
