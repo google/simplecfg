@@ -55,6 +55,7 @@ public class StmtCfgTest {
         }
       };
       Program program = new Program();
+      program.setTypeLookupFilter(Program.LIBRARY_TYPE_FILTER);
       CompilationUnit unit = parser.parse(new FileInputStream(path), path);
       // Attach the parsed unit to a program node so we have a healthy AST.
       program.addCompilationUnit(unit);

@@ -21,6 +21,7 @@ import com.google.simplecfg.ast.CompilationUnit;
 import com.google.simplecfg.ast.ExtendJFinding;
 import com.google.simplecfg.ast.Frontend;
 import com.google.simplecfg.ast.JavaParser;
+import com.google.simplecfg.ast.Program;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -97,6 +98,7 @@ public class ExtendJAnalyzerFrontend extends Frontend {
   @Override
   public int run(String[] args, BytecodeReader reader, JavaParser parser) {
     program.resetStatistics();
+    program.setTypeLookupFilter(Program.LIBRARY_TYPE_FILTER);
     program.initBytecodeReader(reader);
     program.initJavaParser(parser);
 

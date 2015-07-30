@@ -1,4 +1,7 @@
 %header {:
- package com.google.simplecfg.parser;
- import com.google.simplecfg.ast.*;
+package com.google.simplecfg.parser;
+
+import com.google.simplecfg.ast.*;
+import com.google.simplecfg.scanner.*;
+import org.jastadd.extendj.scanner.Unicode;
 :};

@@ -50,12 +50,12 @@ jastadd {
 }
 
 generateJava << {
-	ant.copy file: file('third_party/extendj/git/java8/src/scanner/JavaScanner.java'),
-		todir: file('src/gen/java/scanner'),
+	ant.copy file: file('third_party/extendj/git/java8/src/org/jastadd/extendj/scanner/JavaScanner.java'),
+		todir: file('src/gen/java/org/jastadd/extendj/scanner'),
 		overwrite: true
-	ant.replace file: file('src/gen/java/scanner/JavaScanner.java'),
-		token: 'parser.JavaParser',
-		value: 'com.google.simplecfg.parser.JavaParser'
+	ant.replace file: file('src/gen/java/org/jastadd/extendj/scanner/JavaScanner.java'),
+		token: 'org.jastadd.extendj',
+		value: 'com.google.simplecfg'
 }
 
 test {

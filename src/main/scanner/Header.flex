@@ -1,4 +1,4 @@
-package scanner;
+package com.google.simplecfg.scanner;
 
 import beaver.Symbol;
 import beaver.Scanner;
