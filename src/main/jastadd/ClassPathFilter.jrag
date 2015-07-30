@@ -23,7 +23,7 @@
 aspect ClassPathFilter {
 
   /** The type lookup filter to use during type lookups.  */
-  private TypeLookupFilter Program.typeLookupFilter = PASSTHROUGH_TYPE_FILTER;
+  private TypeLookupFilter Program.typeLookupFilter = NO_TYPE_FILTER;
 
   /** Changes the type lookup filter.  */
   public void Program.setTypeLookupFilter(TypeLookupFilter filter) {
@@ -56,7 +56,7 @@ aspect ClassPathFilter {
   }
 
   /** This type filter does not perform any filtering. */
-  public static final TypeLookupFilter Program.PASSTHROUGH_TYPE_FILTER = new TypeLookupFilter() {
+  public static final TypeLookupFilter Program.NO_TYPE_FILTER = new TypeLookupFilter() {
     @Override
     public void initializeSourceTypeMap(Program program) {
     }

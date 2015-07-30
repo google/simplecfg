@@ -31,10 +31,10 @@ import java.util.ArrayList;
 /** Run ExtendJ based analyzers. */
 class ExtendJService {
 
-  @Parameter(names = "--port", description = "port for RPC server")
+  @Parameter(names = "--port", description = "port for the analyzer RPC server")
   private int port = 10008;
 
-  public static void main(String[] args) {
+  public static void main(String[] args) throws Throwable {
     try {
       ExtendJService service = new ExtendJService();
       new JCommander(service, args);
@@ -49,8 +49,7 @@ class ExtendJService {
       new HttpServerFrontend(server, service.port).run();
     } catch (Throwable t) {
       System.err.println("Error starting service");
-      t.printStackTrace(System.err);
-      System.exit(1);
+      throw t;
     }
   }
 }

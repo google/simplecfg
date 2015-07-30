@@ -37,19 +37,12 @@ public class ExtendJAnalyzerFrontend extends Frontend {
   private final Collection<ExtendJFinding> findings = new ArrayList<ExtendJFinding>();
 
   /**
-   * Entry point.
-   * @param args command-line arguments
+   * Returns the list of findings from the analyzed source files.
+   * <p>
+   * Used by ExtendJAnalyzerMain to print the generated findings on stdout.
    */
-  public static void main(String[] args) {
-    ExtendJAnalyzerFrontend checker = new ExtendJAnalyzerFrontend();
-    int result = checker.run(args);
-    if (result != 0) {
-      System.exit(result);
-    }
-    System.out.println("Found " + checker.findings.size() + " findings.");
-    for (ExtendJFinding finding : checker.findings) {
-      System.out.println(finding);
-    }
+  Collection<ExtendJFinding> getFindings() {
+    return findings;
   }
 
   /**
