@@ -18,7 +18,6 @@ package com.google.simplecfg;
 import com.google.simplecfg.ast.Program;
 import com.google.simplecfg.ast.Frontend;
 import com.google.simplecfg.ast.CompilationUnit;
-import com.google.simplecfg.ast.BytecodeParser;
 import com.google.simplecfg.ast.BodyDecl;
 import com.google.simplecfg.ast.TypeDecl;
 import com.google.simplecfg.parser.JavaParser;

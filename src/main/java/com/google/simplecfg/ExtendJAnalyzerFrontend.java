@@ -23,6 +23,7 @@ import com.google.simplecfg.ast.Frontend;
 import com.google.simplecfg.ast.JavaParser;
 import com.google.simplecfg.ast.Program;
 
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -35,7 +36,7 @@ import java.util.Iterator;
 public class ExtendJAnalyzerFrontend extends Frontend {
 
   private final JavaParser javaParser;
-  private final BytecodeParser bytecodeParser;
+  private final BytecodeReader bytecodeReader;
   private final Collection<ExtendJFinding> findings = new ArrayList<ExtendJFinding>();
 
   /** Create new analyzer instance.  */
@@ -48,7 +49,13 @@ public class ExtendJAnalyzerFrontend extends Frontend {
         return new com.google.simplecfg.parser.JavaParser().parse(is, fileName);
       }
     };
-    bytecodeParser = new BytecodeParser();
+		bytecodeReader = new BytecodeReader() {
+			@Override
+			public CompilationUnit read(InputStream is, String fullName, Program p)
+					throws FileNotFoundException, IOException {
+				return new BytecodeParser(is, fullName).parse(null, null, p);
+			}
+		};
   }
 
   /**
@@ -63,8 +70,7 @@ public class ExtendJAnalyzerFrontend extends Frontend {
   /**
    * Analyze a single file for findings and return the findings in a collection.
    */
-  public static Collection<ExtendJFinding> analyzeFile(final String path)
-      throws Error {
+  public static Collection<ExtendJFinding> analyzeFile(final String path) throws Error {
     ExtendJAnalyzerFrontend checker = new ExtendJAnalyzerFrontend();
     int result = checker.run(new String[] {path});
     if (result != EXIT_SUCCESS) {
@@ -79,7 +85,7 @@ public class ExtendJAnalyzerFrontend extends Frontend {
    * @return 0 on success, 1 on error, 2 on configuration error, 3 on system
    */
   public int run(String args[]) {
-    return run(args, bytecodeParser, javaParser);
+    return run(args, bytecodeReader, javaParser);
   }
 
   @Override
@@ -94,7 +100,7 @@ public class ExtendJAnalyzerFrontend extends Frontend {
   public int run(String[] args, BytecodeReader reader, JavaParser parser) {
     program.resetStatistics();
     program.setTypeLookupFilter(Program.ANALYZER_TYPE_FILTER);
-    program.initBytecodeReader(bytecodeParser);
+    program.initBytecodeReader(bytecodeReader);
     program.initJavaParser(javaParser);
 
     initOptions();
@@ -143,6 +149,8 @@ public class ExtendJAnalyzerFrontend extends Frontend {
       if (compileResult != EXIT_SUCCESS) {
         return compileResult;
       }
+    } catch (IOException e) {
+      throw new Error(e);
     } finally {
       if (program.options().hasOption("-profile")) {
         program.printStatistics(System.out);
