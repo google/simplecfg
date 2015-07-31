@@ -203,7 +203,7 @@ aspect ClassPathFilter {
    * This triggers evaluation of a placeholder type NTA and a placeholder
    * compilation unit NTA.
    */
-  private void Program.addPlaceholderType(String packageName, String typeName) {
+  public void Program.addPlaceholderType(String packageName, String typeName) {
     String fullName = packageName.equals("") ? typeName : packageName + "." + typeName;
     CompilationUnit cu = placeholderCompilationUnit(packageName);
     cu.setFromSource(false);
