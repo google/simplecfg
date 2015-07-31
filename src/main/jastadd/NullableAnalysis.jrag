@@ -96,9 +96,9 @@ aspect NullableAnalysis {
           }
           if (scanner.hasNextLine()) {
             String text = scanner.nextLine();
-            finding.addFix("Remove the @Nullable annotation.\n",
+            finding.addFix("Remove the @Nullable annotation.",
                 line, line,
-                text.substring(0,startCol-1) + text.substring(endCol+1));
+                text.substring(0,startCol-1) + text.substring(endCol+1) + "\n");
           }
         } catch (IOException e) {
           // Failed to unparse the current line.

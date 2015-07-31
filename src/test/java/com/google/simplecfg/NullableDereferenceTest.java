@@ -16,6 +16,8 @@
 package com.google.simplecfg;
 
 import static com.google.common.truth.Truth.assertThat;
+import com.google.simplecfg.ast.CompilationUnit;
+import com.google.simplecfg.ast.ExtendJFinding;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -32,20 +34,29 @@ import java.util.Collection;
 @RunWith(JUnit4.class)
 public class NullableDereferenceTest {
 
+  @Test public void suggestedFixEndsWithNewline() {
+    CompilationUnit unit = StmtCfgTest.parseFile("NullableNullGuard01");
+    Collection<ExtendJFinding> findings = unit.findings();
+    assertThat(findings).isNotEmpty();
+    ExtendJFinding finding = findings.iterator().next();
+    assertThat(finding.fixes).hasSize(1);
+    assertThat(finding.fixes.iterator().next().newText).endsWith("\n");
+  }
+
   @Test public void nullGuard01() {
     Collection<String> findings = StmtCfgTest.findings("NullableNullGuard01");
     assertThat(findings).containsExactly(
-        "NullableNullGuard01:42:25: Dereferencing p, which was declared @Nullable.",
-        "NullableNullGuard01:49:12: Dereferencing p, which was declared @Nullable.",
-        "NullableNullGuard01:62:12: Dereferencing p, which was declared @Nullable."
+        "testdata/NullableNullGuard01.javax:42:25: Dereferencing p, which was declared @Nullable.",
+        "testdata/NullableNullGuard01.javax:49:12: Dereferencing p, which was declared @Nullable.",
+        "testdata/NullableNullGuard01.javax:62:12: Dereferencing p, which was declared @Nullable."
         );
   }
 
   @Test public void nullGuard02() {
     Collection<String> findings = StmtCfgTest.findings("NullableNullGuard02");
     assertThat(findings).containsExactly(
-        "NullableNullGuard02:49:7: Dereferencing p, which was declared @Nullable.",
-        "NullableNullGuard02:54:7: Dereferencing p, which was declared @Nullable."
+        "testdata/NullableNullGuard02.javax:49:7: Dereferencing p, which was declared @Nullable.",
+        "testdata/NullableNullGuard02.javax:54:7: Dereferencing p, which was declared @Nullable."
         );
   }
 
@@ -57,8 +68,8 @@ public class NullableDereferenceTest {
   @Test public void dataflowFalsePositives01() {
     Collection<String> findings = StmtCfgTest.findings("NullableDataflow01");
     assertThat(findings).containsExactly(
-        "NullableDataflow01:31:7: Dereferencing p, which was declared @Nullable.",
-        "NullableDataflow01:38:7: Dereferencing p, which was declared @Nullable."
+        "testdata/NullableDataflow01.javax:31:7: Dereferencing p, which was declared @Nullable.",
+        "testdata/NullableDataflow01.javax:38:7: Dereferencing p, which was declared @Nullable."
         );
   }
 }

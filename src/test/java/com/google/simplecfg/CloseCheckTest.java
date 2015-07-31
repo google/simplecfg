@@ -30,6 +30,6 @@ public class CloseCheckTest {
   @Test public void test01() {
     Collection<String> findings = StmtCfgTest.findings("Close01");
     assertThat(findings).containsExactly(
-        "Close01:23:12: close() may have already been called on writer at this point");
+        "testdata/Close01.javax:23:12: close() may have already been called on writer at this point");
   }
 }

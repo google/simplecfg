@@ -43,7 +43,7 @@ import java.util.Set;
 public class StmtCfgTest {
 
   /** Helper method to parse an ExtendJ compilation unit from a file.  */
-  private static CompilationUnit parseFile(String filename) {
+  protected static CompilationUnit parseFile(String filename) {
     String path = "testdata/" + filename + ".javax";
     try {
       JavaParser parser = new JavaParser() {
@@ -62,7 +62,8 @@ public class StmtCfgTest {
       // Ensure compilation unit is set to final. This is important to get
       // caching to work right in the AST.
       unit = program.getCompilationUnit(0);
-      unit.setClassSource(new FileClassSource(new SourceFolderPath("testdata"), filename));
+      unit.setClassSource(new FileClassSource(new SourceFolderPath("testdata"), path));
+      unit.setFromSource(true);
       return unit;
     } catch (Exception e) {
       e.printStackTrace();
