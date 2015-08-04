@@ -172,4 +172,8 @@ aspect PrintCfgTest {
   eq TryStmt.tryEntryMarker().markerVarName() = "tryEntry";
   eq Program.getChild().markerVarName() = "marker";
   eq AbstractDot.nullableDereferenceMarker().markerVarName() = "nullable";
+  eq ForStmt.loopEndMarker().markerVarName() = "forEnd";
+  eq EnhancedForStmt.loopEndMarker().markerVarName() = "forEnd";
+  eq WhileStmt.loopEndMarker().markerVarName() = "whileEnd";
+  eq DoStmt.doEntryMarker().markerVarName() = "doEntry";
 }

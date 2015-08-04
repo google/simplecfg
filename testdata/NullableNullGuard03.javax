@@ -107,4 +107,29 @@ class NullableNullGuard03 {
     }
     p.size(); // Negative finding.
   }
+
+  void f14(@Nullable String p, boolean b) {
+    while (b || p != null) {
+      p.size(); // Positive finding.
+    }
+  }
+
+  void f15(@Nullable String p, boolean b) {
+    while (p == null || b) {
+      p.size(); // Positive finding.
+    }
+  }
+
+  void f16(@Nullable String p, boolean b) {
+    while (b || p == null) {
+    }
+    p.size(); // Positive finding.
+  }
+
+  void f17(@Nullable String p, boolean b) {
+    while (p == null || b) {
+    }
+    p.size(); // Positive finding.
+  }
+
 }

@@ -66,7 +66,7 @@ public class NullableDereferenceTest {
   @Test public void nullGuards03() {
     Collection<Integer> lines = StmtCfgTest.findingLines("NullableNullGuard03",
         Program.ANALYZER_TYPE_FILTER);
-    assertThat(lines).containsExactly(28, 34, 41, 48);
+    assertThat(lines).containsExactly(28, 34, 41, 48, 113, 119);
   }
 
   @Test public void methodNullGuard01() {

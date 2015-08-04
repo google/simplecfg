@@ -585,6 +585,9 @@ aspect SimpleCFG {
   /** The branch node for this statement. */
   syn nta CfgBranch ForStmt.branch() = new CfgBranch();
 
+  /** The CFG end marker for this loop. */
+  syn nta CfgMarker ForStmt.loopEndMarker() = new CfgMarker();
+
   eq ForStmt.entry() =
       getNumInitStmt() > 0
       ? getInitStmt(0).entry()
@@ -602,11 +605,17 @@ aspect SimpleCFG {
       ? getUpdateStmt(index+1).entry()
       : getCondition().entry();
 
-  // Loop back.
-  eq ForStmt.getStmt().follow() =
+  eq ForStmt.getStmt().follow() = loopEndMarker();
+
+  eq ForStmt.loopEndMarker().follow() =
       getNumUpdateStmt() > 0
       ? getUpdateStmt(0).entry()
       : getCondition().entry();
+
+  eq ForStmt.loopEndMarker().succ() =
+      getNumUpdateStmt() > 0
+      ? Collections.singleton(getUpdateStmt(0).entry())
+      : Collections.singleton(getCondition().entry());
 
   eq ForStmt.branch().succ() {
     if (getCondition().isTrue()) {
@@ -621,6 +630,9 @@ aspect SimpleCFG {
   /** The branch node for this statement. */
   syn nta CfgBranch EnhancedForStmt.branch() = new CfgBranch();
 
+  /** The CFG end marker for this loop. */
+  syn nta CfgMarker EnhancedForStmt.loopEndMarker() = new CfgMarker();
+
   eq EnhancedForStmt.branch().succ() =
       smallSet(getStmt().entry(), follow());
 
@@ -628,16 +640,27 @@ aspect SimpleCFG {
 
   eq EnhancedForStmt.getExpr().follow() = branch();
 
-  eq EnhancedForStmt.getStmt().follow() = entry(); // Loop back.
+  eq EnhancedForStmt.getStmt().follow() = loopEndMarker();
+
+  eq EnhancedForStmt.loopEndMarker().follow() = entry(); // Loop back.
+
+  eq EnhancedForStmt.loopEndMarker().succ() = Collections.singleton(entry());
 
   /** The branch node for this statement. */
   syn nta CfgBranch WhileStmt.branch() = new CfgBranch();
+
+  /** The CFG end marker for this loop. */
+  syn nta CfgMarker WhileStmt.loopEndMarker() = new CfgMarker();
 
   eq WhileStmt.entry() = getCondition().entry();
 
   eq WhileStmt.getCondition().follow() = branch();
 
-  eq WhileStmt.getStmt().follow() = entry(); // Loop back.
+  eq WhileStmt.getStmt().follow() = loopEndMarker();
+
+  eq WhileStmt.loopEndMarker().follow() = entry(); // Loop back.
+
+  eq WhileStmt.loopEndMarker().succ() = Collections.singleton(entry());
 
   eq WhileStmt.branch().succ() {
     if (getCondition().isTrue()) {
@@ -652,7 +675,14 @@ aspect SimpleCFG {
   /** The branch node for this statement. */
   syn nta CfgBranch DoStmt.branch() = new CfgBranch();
 
-  eq DoStmt.entry() = getStmt().entry();
+  /** The CFG entry marker for this loop. */
+  syn nta CfgMarker DoStmt.doEntryMarker() = new CfgMarker();
+
+  eq DoStmt.entry() = doEntryMarker();
+
+  eq DoStmt.doEntryMarker().follow() = getStmt().entry();
+
+  eq DoStmt.doEntryMarker().succ() = Collections.singleton(getStmt().entry());
 
   eq DoStmt.getStmt().follow() = getCondition().entry();
 
@@ -661,11 +691,11 @@ aspect SimpleCFG {
   // Loop back.
   eq DoStmt.branch().succ() {
     if (getCondition().isTrue()) {
-      return Collections.singleton(getStmt().entry());
+      return Collections.singleton(entry());
     } else if (getCondition().isFalse()) {
       return Collections.singleton(follow());
     } else {
-      return smallSet(getStmt().entry(), follow());
+      return smallSet(entry(), follow());
     }
   }
 

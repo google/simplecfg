@@ -247,12 +247,12 @@ aspect NullableDereferenceAnalysis {
       : getCondition().isNonNullWhenFalse(var);
 
   eq ForStmt.branch().inNullGuard(Variable var, CfgNode succ) =
-      succ == getCondition().follow()
+      succ == getStmt().entry()
       ? getCondition().isNonNullWhenTrue(var)
       : getCondition().isNonNullWhenFalse(var);
 
   eq WhileStmt.branch().inNullGuard(Variable var, CfgNode succ) =
-      succ == getCondition().follow()
+      succ == getStmt().entry()
       ? getCondition().isNonNullWhenTrue(var)
       : getCondition().isNonNullWhenFalse(var);
 

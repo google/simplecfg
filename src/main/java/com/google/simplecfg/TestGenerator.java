@@ -38,6 +38,7 @@ class TestGenerator {
     for (String path : args) {
       try {
         Program program = new Program();
+        program.setTypeLookupFilter(Program.BASE_LIBRARY_FILTER);
         CompilationUnit unit = new JavaParser().parse(new FileInputStream(path), path);
         // Attach the parsed unit to a program node so we have a healthy AST.
         program.addCompilationUnit(unit);
