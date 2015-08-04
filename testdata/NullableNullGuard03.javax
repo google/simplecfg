@@ -62,4 +62,49 @@ class NullableNullGuard03 {
       p.size(); // Negative finding.
     }
   }
+
+  void f7(@Nullable String p, boolean b) {
+    while (b && p != null) {
+      p.size(); // Negative finding.
+    }
+  }
+
+  void f8(@Nullable String p) {
+    while (p != null) {
+      p.size(); // Negative finding.
+    }
+  }
+
+  void f9(@Nullable String p, boolean b) {
+    while (b && p != null) {
+      p.size(); // Negative finding.
+    }
+  }
+
+  void f10(@Nullable String p, boolean b) {
+    while (p != null && b) {
+      p.size(); // Negative finding.
+    }
+  }
+
+  void f11(@Nullable String p) {
+    while (p == null) {
+      return;
+    }
+    p.size(); // Negative finding.
+  }
+
+  void f12(@Nullable String p, boolean b) {
+    while (b || p == null) {
+      return;
+    }
+    p.size(); // Negative finding.
+  }
+
+  void f13(@Nullable String p, boolean b) {
+    while (p == null || b) {
+      return;
+    }
+    p.size(); // Negative finding.
+  }
 }
