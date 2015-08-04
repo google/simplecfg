@@ -16,8 +16,10 @@
 package com.google.simplecfg;
 
 import static com.google.common.truth.Truth.assertThat;
+
 import com.google.simplecfg.ast.CompilationUnit;
 import com.google.simplecfg.ast.ExtendJFinding;
+import com.google.simplecfg.ast.Program;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -35,7 +37,8 @@ import java.util.Collection;
 public class NullableDereferenceTest {
 
   @Test public void suggestedFixEndsWithNewline() {
-    CompilationUnit unit = StmtCfgTest.parseFile("NullableNullGuard01");
+    CompilationUnit unit = StmtCfgTest.parseFile("NullableNullGuard01",
+        Program.ANALYZER_TYPE_FILTER);
     Collection<ExtendJFinding> findings = unit.findings();
     assertThat(findings).isNotEmpty();
     ExtendJFinding finding = findings.iterator().next();

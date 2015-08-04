@@ -1,0 +1,140 @@
+/**
+ * Copyright 2015 Google Inc. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/**
+ * This is test data, not real code! This file is parsed by the Java API analyzer tests
+ * to check that the expected findings are reported for this file.
+ */
+import java.io.BufferedInputStream;
+import java.io.Closeable;
+import java.io.FileInputStream;
+
+/* This code is used to check that the already-closed analysis handles different control flow
+ * structures appropriately.
+ */
+class AlreadyClosedControlFlow01 {
+  void for01(FileInputStream in) {
+    for (int i = 0; i < 10; ++i) {
+      in.close();
+    }
+    // The analyzer does not know how many loop iterations are executed, assumes 0+
+    // iterations are possible.
+    in.skip(0); // Positive finding.
+  }
+
+  void for02() {
+    for (int i = 0; i < 10; ++i) {
+      FileInputStream in = new FileInputStream("somefile");
+      in.skip(0);
+      in.close(); // Negative finding: new instance each iteration.
+    }
+  }
+
+  void if01() {
+    Closeable in = new FileInputStream("somefile");
+    if (System.currentTimeMillis() & 1 == 0) {
+      in.read();
+      in.close();
+    } else {
+      in.read();
+      in.close();
+    }
+  }
+
+  void if02() {
+    Closeable in = new FileInputStream("somefile");
+    in.close();
+    if (System.currentTimeMillis() & 1 == 0) {
+      in.read(); // Positive finding.
+    }
+  }
+
+  void if03() {
+    Closeable in = new FileInputStream("foo");
+    in.close();
+    // Check that the if condition is analyzed.
+    if (in.read() == -1) { // Positive finding.
+    }
+  }
+
+  void while01() {
+    Closeable in = new FileInputStream("bar");
+    while (true) {
+      in.read();
+      in.close();
+      break;
+    }
+    in.read(); // Positive finding.
+  }
+
+  void while02() {
+    Closeable in = new FileInputStream("bar");
+    while (in.read() != -1) { // Positive finding.
+      in.close();
+    }
+  }
+
+  void try01(BufferedInputStream in) {
+    try {
+      in.close();
+    } catch (Throwable t) {
+      in.read(); // Negative finding: preceding close call interrupted by exception.
+    }
+  }
+
+  void try02(BufferedInputStream in) {
+    try {
+      in.close();
+    } catch (Throwable t) {
+      in.read();
+    } finally {
+      in.read(); // Positive finding: can be reached after an uninterrupted close call.
+    }
+  }
+
+  void switch01(BufferedInputStream in, int i) {
+    switch (i) {
+      case 1:
+        in.close();
+        break;
+      case 2:
+        in.read();
+        break;
+      case 3:
+        in.close();
+      case 4:
+        in.read(); // Positive finding.
+        break;
+    }
+  }
+
+  void switch02(BufferedInputStream in, int i) {
+    switch (i) {
+      case 1:
+        in.close();
+        break;
+      case 2:
+        in.read();
+        break;
+      case 3:
+        in.close();
+        return;
+      case 4:
+        in.read(); // Positive finding.
+      default:
+        in.close();
+    }
+  }
+}

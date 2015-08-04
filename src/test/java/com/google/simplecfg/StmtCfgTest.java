@@ -18,6 +18,8 @@ package com.google.simplecfg;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;
 
+import com.google.simplecfg.ast.BytecodeParser;
+import com.google.simplecfg.ast.BytecodeReader;
 import com.google.simplecfg.ast.CfgNode;
 import com.google.simplecfg.ast.CompilationUnit;
 import com.google.simplecfg.ast.ExtendJFinding;
@@ -25,12 +27,16 @@ import com.google.simplecfg.ast.FileClassSource;
 import com.google.simplecfg.ast.JavaParser;
 import com.google.simplecfg.ast.Program;
 import com.google.simplecfg.ast.SourceFolderPath;
+import com.google.simplecfg.ast.TypeLookupFilter;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -43,20 +49,28 @@ import java.util.Set;
 public class StmtCfgTest {
 
   /** Helper method to parse an ExtendJ compilation unit from a file.  */
-  protected static CompilationUnit parseFile(String filename) {
+  protected static CompilationUnit parseFile(String filename, TypeLookupFilter typeFilter) {
     String path = "testdata/" + filename + ".javax";
     try {
-      JavaParser parser = new JavaParser() {
+      JavaParser javaParser = new JavaParser() {
         @Override
-        public CompilationUnit parse(java.io.InputStream is,
-            String fileName) throws java.io.IOException,
-            beaver.Parser.Exception {
+        public CompilationUnit parse(java.io.InputStream is, String fileName)
+            throws IOException, beaver.Parser.Exception {
           return new com.google.simplecfg.parser.JavaParser().parse(is, fileName);
         }
       };
+		  BytecodeReader bytecodeReader = new BytecodeReader() {
+			  @Override
+			  public CompilationUnit read(InputStream is, String fullName, Program p)
+				throws FileNotFoundException, IOException {
+				  return new BytecodeParser(is, fullName).parse(null, null, p);
+			  }
+		  };
       Program program = new Program();
-      program.setTypeLookupFilter(Program.ANALYZER_TYPE_FILTER);
-      CompilationUnit unit = parser.parse(new FileInputStream(path), path);
+      program.initBytecodeReader(bytecodeReader);
+      program.initJavaParser(javaParser);
+      program.setTypeLookupFilter(typeFilter);
+      CompilationUnit unit = javaParser.parse(new FileInputStream(path), path);
       // Attach the parsed unit to a program node so we have a healthy AST.
       program.addCompilationUnit(unit);
       // Ensure compilation unit is set to final. This is important to get
@@ -75,7 +89,12 @@ public class StmtCfgTest {
 
   /** Helper to get the findings for a given file. */
   protected static Collection<String> findings(String filename) {
-    CompilationUnit unit = StmtCfgTest.parseFile(filename);
+    return findings(filename, Program.ANALYZER_TYPE_FILTER);
+  }
+
+  /** Helper to get the findings for a given file. */
+  protected static Collection<String> findings(String filename, TypeLookupFilter typeFilter) {
+    CompilationUnit unit = StmtCfgTest.parseFile(filename, typeFilter);
     Collection<String> findings = new HashSet<String>();
     for (ExtendJFinding finding : unit.findings()) {
       findings.add(finding.toString());
@@ -83,8 +102,18 @@ public class StmtCfgTest {
     return findings;
   }
 
+  /** Helper to get the line numbers where findings were reported for a given file. */
+  protected static Collection<Integer> findingLines(String filename, TypeLookupFilter typeFilter) {
+    CompilationUnit unit = StmtCfgTest.parseFile(filename, typeFilter);
+    Collection<Integer> lines = new LinkedList<>();
+    for (ExtendJFinding finding : unit.findings()) {
+      lines.add(finding.startLine);
+    }
+    return lines;
+  }
+
   private static CfgNode parseCfg(String filename) {
-    CompilationUnit unit = parseFile(filename);
+    CompilationUnit unit = parseFile(filename, Program.BASE_LIBRARY_FILTER);
     assertThat(unit.getTypeDeclList()).isNotEmpty();
     assertThat(unit.getTypeDecl(0).getBodyDeclList()).isNotEmpty();
     return unit.getTypeDecl(0).getBodyDecl(0).entry();

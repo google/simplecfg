@@ -13,23 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.simplecfg;
+/**
+ * This is test data, not real code! This file is parsed by the Java API analyzer tests
+ * to check that the expected findings are reported for this file.
+ */
 
-import static com.google.common.truth.Truth.assertThat;
-
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
-
-import java.util.Collection;
-
-/** Integration tests for the already-closed checker. */
-@RunWith(JUnit4.class)
-public class CloseCheckTest {
-
-  @Test public void test01() {
-    Collection<String> findings = StmtCfgTest.findings("Close01");
-    assertThat(findings).containsExactly(
-        "testdata/Close01.javax:23:12: close() may have already been called on writer at this point");
+/* This code is used to check that the already-closed analyzer can identify java.io.Writer
+ * as a subtype of java.io.Closeable and report a finding for a simple call after close.
+ */
+class AlreadyClosedWriter01 {
+  void f(java.io.Writer writer) {
+    writer.close();
+    writer.flush(); // Finding: Calling flush() after close().
   }
 }
