@@ -31,8 +31,8 @@ import java.util.Collection;
 
 /**
  * Converts an ExtendJ finding into a Shipshape finding.
- * <p>
- * The ExtendJ-based static analyses are not aware of the Shipshape note proto since the analyses
+ *
+ * <p>The ExtendJ-based static analyses are not aware of the Shipshape note proto since the analyses
  * are designed to be integrated into different frameworks, not only Shipshape.  ExtendJFinding is a
  * generic static analysis finding without the ShipshapeContext needed to build a Shipshape note.
  */

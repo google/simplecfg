@@ -23,8 +23,8 @@ import java.util.Set;
 /**
  * Attributes to build a simplified Control Flow Graph (CFG) for a methods,
  * constructors, and initializers.
- * <p>
- * The simple CFG contains only method calls and branches. The simple CFG has
+ *
+ * <p>The simple CFG contains only method calls and branches. The simple CFG has
  * a naive exception model - any exception is assumed to be throwable by any
  * statement.
  */

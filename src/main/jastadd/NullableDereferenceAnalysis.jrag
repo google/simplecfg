@@ -16,26 +16,27 @@
 
 /**
  * Adds an analysis that checks for dereferences of a parameter declared nullable.
- * <p>
- * When a method or constructor parameter is annotated with javax.annotation.Nullable,
+ *
+ * <p>When a method or constructor parameter is annotated with javax.annotation.Nullable,
  * we check that all dereferences of that parameter are guarded by a null-check. The
  * analysis is control-flow sensitive in that it will recognize if all control flow paths
  * to the dereference are effectively guarded by a null check, for example: {@code
  * if (p == null) return;
  * p.x(); // Guarded by null check above.
  * }
- * <p>
- * The analysis also assumes that a method call to {@code checkNotNull}, or {@code isNotNull}
+ *
+ * <p>The analysis also assumes that a method call to {@code checkNotNull}, or {@code isNotNull}
  * will also work as a null guard. There are more possible variations of methods guarding against
  * nullness that could be considered, but currently we only check for these methods:
+ *
  * <ul>
  * <li>{@code checkNotNull}, {@code checkNonNull}: assume that any control flow path following this
  * call with the analyzed parameter as the first argument are safe for dereferencing that parameter
  * <li>{@code isNotNull}, {@code isNonNull}: assume that calls to methods with names that start with
  * these prefixes guard the single argument against nullness
  * </ul>
- * <p>
- * To find potential null dereferences on nullable parameters, the analysis does a forward CFG
+ *
+ * <p>To find potential null dereferences on nullable parameters, the analysis does a forward CFG
  * traversal from the entry-point of the method. Note that this is only done whenever a
  * {@code @Nullable} parameter has been encountered in the method. The traversal explores all paths
  * from the method entry until it finds null guard statements such as {@code if (p != null)}. The
@@ -44,14 +45,14 @@
  * {@code CfgSearch} interface. This visitor is invoked for each node in the CFG search, and it
  * decides if the search will continue from that node, or if the current edge should be skipped
  * (i.e., pruned).
- * <p>
- * In order to find the position in the CFG where a potential null dereference occurs, CFG marker
+ *
+ * <p>In order to find the position in the CFG where a potential null dereference occurs, CFG marker
  * nodes are inserted. This is done by adding a synthesized non-terminal attribute (NTA) for
  * a CfgMarker on AbstractDot (which represents Java dot expressions). This marker node appears
  * in the CFG as "nullable access" because it is inserted whenever a nullable variable is
  * dereferenced.
- * <p>
- * Dataflow analysis is not used, so in order to analyze a parameter it is required to be
+ *
+ * <p>Dataflow analysis is not used, so in order to analyze a parameter it is required to be
  * effectively final, i.e. it is not assigned anywhere in side the body of the method/constructor.
  */
 aspect NullableDereferenceAnalysis {

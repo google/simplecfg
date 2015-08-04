@@ -60,8 +60,8 @@ public class ExtendJAnalyzerFrontend extends Frontend {
 
   /**
    * Returns the list of findings from the analyzed source files.
-   * <p>
-   * Used by ExtendJAnalyzerMain to print the generated findings on stdout.
+   *
+   * <p>Used by ExtendJAnalyzerMain to print the generated findings on stdout.
    */
   Collection<ExtendJFinding> getFindings() {
     return findings;
