@@ -238,23 +238,23 @@ aspect NullableDereferenceAnalysis {
 
   eq IfStmt.branch().inNullGuard(Variable var, CfgNode succ) =
       succ == getThen().entry()
-      ? getCondition().isNonNullTest(var)
-      : getCondition().isNullTest(var);
+      ? getCondition().isNonNullWhenTrue(var)
+      : getCondition().isNonNullWhenFalse(var);
 
   eq ConditionalExpr.branch().inNullGuard(Variable var, CfgNode succ) =
       succ == getTrueExpr().entry()
-      ? getCondition().isNonNullTest(var)
-      : getCondition().isNullTest(var);
+      ? getCondition().isNonNullWhenTrue(var)
+      : getCondition().isNonNullWhenFalse(var);
 
   eq ForStmt.branch().inNullGuard(Variable var, CfgNode succ) =
       succ == getCondition().follow()
-      ? getCondition().isNonNullTest(var)
-      : getCondition().isNullTest(var);
+      ? getCondition().isNonNullWhenTrue(var)
+      : getCondition().isNonNullWhenFalse(var);
 
   eq WhileStmt.branch().inNullGuard(Variable var, CfgNode succ) =
       succ == getCondition().follow()
-      ? getCondition().isNonNullTest(var)
-      : getCondition().isNullTest(var);
+      ? getCondition().isNonNullWhenTrue(var)
+      : getCondition().isNonNullWhenFalse(var);
 
   eq EnhancedForStmt.branch().inNullGuard(Variable var, CfgNode succ) = false;
   eq DoStmt.branch().inNullGuard(Variable var, CfgNode succ) = false;
@@ -266,54 +266,120 @@ aspect NullableDereferenceAnalysis {
   /** Return {@code true} if this expression is guarded by a != null check for var.  */
   inh boolean Expr.hasNullGuard(Variable var);
   eq Program.getChild().hasNullGuard(Variable var) = false;
-  eq IfStmt.getThen().hasNullGuard(Variable var) = getCondition().isNonNullTest(var);
-  eq IfStmt.getElse().hasNullGuard(Variable var) = getCondition().isNullTest(var);
-  eq WhileStmt.getStmt().hasNullGuard(Variable var) = getCondition().isNonNullTest(var);
-  eq ForStmt.getStmt().hasNullGuard(Variable var) = getCondition().isNonNullTest(var);
-  eq ConditionalExpr.getTrueExpr().hasNullGuard(Variable var) = getCondition().isNonNullTest(var);
-  eq ConditionalExpr.getFalseExpr().hasNullGuard(Variable var) = getCondition().isNullTest(var);
+  eq IfStmt.getThen().hasNullGuard(Variable var) = getCondition().isNonNullWhenTrue(var);
+  eq IfStmt.getElse().hasNullGuard(Variable var) = getCondition().isNonNullWhenFalse(var);
+  eq WhileStmt.getStmt().hasNullGuard(Variable var) = getCondition().isNonNullWhenTrue(var);
+  eq ForStmt.getStmt().hasNullGuard(Variable var) = getCondition().isNonNullWhenTrue(var);
+  eq ConditionalExpr.getTrueExpr().hasNullGuard(Variable var) =
+      getCondition().isNonNullWhenTrue(var);
+  eq ConditionalExpr.getFalseExpr().hasNullGuard(Variable var) =
+      getCondition().isNonNullWhenFalse(var);
   eq AndLogicalExpr.getRightOperand().hasNullGuard(Variable var) =
-      getLeftOperand().isNonNullTest(var) || hasNullGuard(var);
+      getLeftOperand().isNonNullWhenTrue(var) || hasNullGuard(var);
   eq OrLogicalExpr.getRightOperand().hasNullGuard(Variable var) =
-      getLeftOperand().isNullTest(var) || hasNullGuard(var);
+      getLeftOperand().isNonNullWhenFalse(var) || hasNullGuard(var);
 
-  syn boolean Expr.isNullTest(Variable var) = false;
-  eq EQExpr.isNullTest(Variable var) =
+  /** @return {@code true} if the variable var is null when this expression is true. */
+  syn boolean Expr.isNullWhenTrue(Variable var) = false;
+
+  eq EQExpr.isNullWhenTrue(Variable var) =
       getLeftOperand().isNull() && getRightOperand().varDecl() == var
       || getRightOperand().isNull() && getLeftOperand().varDecl() == var;
-  eq LogNotExpr.isNullTest(Variable var) = getOperand().isNonNullTest(var);
-  eq ParExpr.isNullTest(Variable var) = getExpr().isNullTest(var);
-  eq AndLogicalExpr.isNullTest(Variable var) =
-      getLeftOperand().isNullTest(var) || getRightOperand().isNullTest(var);
-  eq OrLogicalExpr.isNullTest(Variable var) =
-      getLeftOperand().isNullTest(var) || getRightOperand().isNullTest(var);
 
-  eq AbstractDot.isNullTest(Variable var) =
-      !getLeft().isVariable(var) && getRight().isNullTest(var);
+  eq LogNotExpr.isNullWhenTrue(Variable var) = getOperand().isNullWhenFalse(var);
+
+  eq ParExpr.isNullWhenTrue(Variable var) = getExpr().isNullWhenTrue(var);
+
+  eq AndLogicalExpr.isNullWhenTrue(Variable var) =
+      getLeftOperand().isNullWhenTrue(var) || getRightOperand().isNullWhenTrue(var);
+
+  eq OrLogicalExpr.isNullWhenTrue(Variable var) =
+      getLeftOperand().isFalse() && getRightOperand().isNullWhenTrue(var)
+      || getRightOperand().isFalse() && getLeftOperand().isNullWhenTrue(var);
+
+  eq AbstractDot.isNullWhenTrue(Variable var) =
+      !getLeft().isVariable(var) && getRight().isNullWhenTrue(var);
 
   // Assume that a method call to X.isNull_(var) is equivalent to a null test on var.
-  eq MethodAccess.isNullTest(Variable var) =
+  eq MethodAccess.isNullWhenTrue(Variable var) =
       name().startsWith("isNull") && getNumArg() == 1 && getArg(0).isVariable(var);
 
-  syn boolean Expr.isNonNullTest(Variable var) = false;
-  eq NEExpr.isNonNullTest(Variable var) =
+  /** @return {@code true} if the variable var is null when this expression is false. */
+  syn boolean Expr.isNullWhenFalse(Variable var) = false;
+
+  eq NEExpr.isNullWhenFalse(Variable var) =
       getLeftOperand().isNull() && getRightOperand().varDecl() == var
       || getRightOperand().isNull() && getLeftOperand().varDecl() == var;
-  eq LogNotExpr.isNonNullTest(Variable var) = getOperand().isNullTest(var);
-  eq ParExpr.isNonNullTest(Variable var) = getExpr().isNonNullTest(var);
-  eq AndLogicalExpr.isNonNullTest(Variable var) =
-      getLeftOperand().isNonNullTest(var) || getRightOperand().isNonNullTest(var);
-  eq OrLogicalExpr.isNonNullTest(Variable var) =
-      getLeftOperand().isFalse() && getRightOperand().isNonNullTest(var)
-      || getRightOperand().isFalse() && getLeftOperand().isNonNullTest(var);
 
-  eq AbstractDot.isNonNullTest(Variable var) =
-      !getLeft().isVariable(var) && getRight().isNonNullTest(var);
+  eq LogNotExpr.isNullWhenFalse(Variable var) = getOperand().isNullWhenTrue(var);
+
+  eq ParExpr.isNullWhenFalse(Variable var) = getExpr().isNullWhenFalse(var);
+
+  eq AndLogicalExpr.isNullWhenFalse(Variable var) =
+      getLeftOperand().isTrue() && getRightOperand().isNullWhenFalse(var)
+      || getRightOperand().isTrue() && getLeftOperand().isNullWhenFalse(var);
+
+  eq OrLogicalExpr.isNullWhenFalse(Variable var) =
+      getLeftOperand().isNullWhenFalse(var) && getRightOperand().isNullWhenFalse(var);
+
+  eq AbstractDot.isNullWhenFalse(Variable var) =
+      !getLeft().isVariable(var) && getRight().isNullWhenFalse(var);
 
   // Assume that a method call to X.isNo{t,n}Null_(var) is equivalent to a non-null test on var.
-  eq MethodAccess.isNonNullTest(Variable var) =
+  eq MethodAccess.isNullWhenFalse(Variable var) =
       (name().startsWith("isNotNull") || name().startsWith("isNonNull"))
       && getNumArg() == 1 && getArg(0).isVariable(var);
+
+  /** @return {@code true} if the variable var is non-null when this expression is true. */
+  syn boolean Expr.isNonNullWhenTrue(Variable var) = false;
+
+  eq NEExpr.isNonNullWhenTrue(Variable var) =
+      getLeftOperand().isNull() && getRightOperand().varDecl() == var
+      || getRightOperand().isNull() && getLeftOperand().varDecl() == var;
+
+  eq LogNotExpr.isNonNullWhenTrue(Variable var) = getOperand().isNullWhenTrue(var);
+
+  eq ParExpr.isNonNullWhenTrue(Variable var) = getExpr().isNonNullWhenTrue(var);
+
+  eq AndLogicalExpr.isNonNullWhenTrue(Variable var) =
+      getLeftOperand().isNonNullWhenTrue(var) || getRightOperand().isNonNullWhenTrue(var);
+
+  eq OrLogicalExpr.isNonNullWhenTrue(Variable var) =
+      getLeftOperand().isFalse() && getRightOperand().isNonNullWhenTrue(var)
+      || getRightOperand().isFalse() && getLeftOperand().isNonNullWhenTrue(var);
+
+  eq AbstractDot.isNonNullWhenTrue(Variable var) =
+      !getLeft().isVariable(var) && getRight().isNonNullWhenTrue(var);
+
+  // Assume that a method call to X.isNo{t,n}Null_(var) is equivalent to a non-null test on var.
+  eq MethodAccess.isNonNullWhenTrue(Variable var) =
+      (name().startsWith("isNotNull") || name().startsWith("isNonNull"))
+      && getNumArg() == 1 && getArg(0).isVariable(var);
+
+  /** @return {@code true} if the variable var is non-null when this expression is false. */
+  syn boolean Expr.isNonNullWhenFalse(Variable var) = false;
+
+  eq EQExpr.isNonNullWhenFalse(Variable var) =
+      getLeftOperand().isNull() && getRightOperand().varDecl() == var
+      || getRightOperand().isNull() && getLeftOperand().varDecl() == var;
+
+  eq LogNotExpr.isNonNullWhenFalse(Variable var) = getOperand().isNonNullWhenTrue(var);
+
+  eq ParExpr.isNonNullWhenFalse(Variable var) = getExpr().isNonNullWhenFalse(var);
+
+  eq AndLogicalExpr.isNonNullWhenFalse(Variable var) =
+      getLeftOperand().isTrue() && getRightOperand().isNonNullWhenFalse(var)
+      || getRightOperand().isTrue() && getLeftOperand().isNonNullWhenFalse(var);
+
+  eq OrLogicalExpr.isNonNullWhenFalse(Variable var) =
+      getLeftOperand().isNonNullWhenFalse(var) || getRightOperand().isNonNullWhenFalse(var);
+
+  eq AbstractDot.isNonNullWhenFalse(Variable var) =
+      !getLeft().isVariable(var) && getRight().isNonNullWhenFalse(var);
+
+  // Assume that a method call to X.isNull_(var) is equivalent to a null test on var.
+  eq MethodAccess.isNonNullWhenFalse(Variable var) =
+      name().startsWith("isNull") && getNumArg() == 1 && getArg(0).isVariable(var);
 
   syn boolean Expr.isNull() = type().isNull();
   eq NullLiteral.isNull() = true;

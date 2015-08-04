@@ -46,7 +46,7 @@ public class NullableDereferenceTest {
     assertThat(finding.fixes.iterator().next().newText).endsWith("\n");
   }
 
-  @Test public void nullGuard01() {
+  @Test public void nullGuards01() {
     Collection<String> findings = StmtCfgTest.findings("NullableNullGuard01");
     assertThat(findings).containsExactly(
         "testdata/NullableNullGuard01.javax:42:25: Dereferencing p, which was declared @Nullable.",
@@ -55,12 +55,18 @@ public class NullableDereferenceTest {
         );
   }
 
-  @Test public void nullGuard02() {
+  @Test public void nullGuards02() {
     Collection<String> findings = StmtCfgTest.findings("NullableNullGuard02");
     assertThat(findings).containsExactly(
         "testdata/NullableNullGuard02.javax:49:7: Dereferencing p, which was declared @Nullable.",
         "testdata/NullableNullGuard02.javax:54:7: Dereferencing p, which was declared @Nullable."
         );
+  }
+
+  @Test public void nullGuards03() {
+    Collection<Integer> lines = StmtCfgTest.findingLines("NullableNullGuard03",
+        Program.ANALYZER_TYPE_FILTER);
+    assertThat(lines).containsExactly(28, 34, 41, 48);
   }
 
   @Test public void methodNullGuard01() {
