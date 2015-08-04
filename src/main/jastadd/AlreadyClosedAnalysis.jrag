@@ -22,7 +22,7 @@
  * we do a breadth-first search on the reverse CFG from the location of that call to see if a
  * call to {@code close()} was made on the same instance previously.
  */
-aspect CloseAnalysis {
+aspect AlreadyClosedAnalysis {
 
   MethodAccess contributes alreadyClosedFinding()
       when alreadyClosedStream()
