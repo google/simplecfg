@@ -59,13 +59,13 @@ public class StmtCfgTest {
           return new com.google.simplecfg.parser.JavaParser().parse(is, fileName);
         }
       };
-		  BytecodeReader bytecodeReader = new BytecodeReader() {
-			  @Override
-			  public CompilationUnit read(InputStream is, String fullName, Program p)
-				throws FileNotFoundException, IOException {
-				  return new BytecodeParser(is, fullName).parse(null, null, p);
-			  }
-		  };
+      BytecodeReader bytecodeReader = new BytecodeReader() {
+        @Override
+        public CompilationUnit read(InputStream is, String fullName, Program p)
+        throws FileNotFoundException, IOException {
+          return new BytecodeParser(is, fullName).parse(null, null, p);
+        }
+      };
       Program program = new Program();
       program.initBytecodeReader(bytecodeReader);
       program.initJavaParser(javaParser);

@@ -49,13 +49,13 @@ public class ExtendJAnalyzerFrontend extends Frontend {
         return new com.google.simplecfg.parser.JavaParser().parse(is, fileName);
       }
     };
-		bytecodeReader = new BytecodeReader() {
-			@Override
-			public CompilationUnit read(InputStream is, String fullName, Program p)
-					throws FileNotFoundException, IOException {
-				return new BytecodeParser(is, fullName).parse(null, null, p);
-			}
-		};
+    bytecodeReader = new BytecodeReader() {
+      @Override
+      public CompilationUnit read(InputStream is, String fullName, Program p)
+          throws FileNotFoundException, IOException {
+        return new BytecodeParser(is, fullName).parse(null, null, p);
+      }
+    };
   }
 
   /**
