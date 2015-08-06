@@ -393,6 +393,9 @@ aspect NullableDereferenceAnalysis {
       ? getInit().isNonNullWhenTrue(var)
       : false;
 
+  // An instanceof check guards against the variable being null.
+  eq InstanceOfExpr.isNonNullWhenTrue(Variable var) = getExpr().isVariable(var);
+
   /** @return {@code true} if the variable var is non-null when this expression is false. */
   syn boolean Expr.isNonNullWhenFalse(Variable var) = false;
 

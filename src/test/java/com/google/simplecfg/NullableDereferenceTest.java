@@ -81,4 +81,9 @@ public class NullableDereferenceTest {
         "testdata/NullableDataflow01.javax:35:7: Dereferencing p, which was declared @Nullable."
         );
   }
+
+  @Test public void instanceOf() {
+    Collection<String> findings = StmtCfgTest.findings("NullableInstanceOf");
+    assertThat(findings).isEmpty();
+  }
 }
