@@ -110,6 +110,11 @@ aspect NullableDereferenceAnalysis {
     return finding;
   }
 
+  // Exclude variable arity parameters from Nullable dereference analysis.
+  // When a variable arity parameter is annotated @Nullable, that will most likely be intended as a
+  // @Nullable annotation for the individual parameters, not the containing argument array.
+  eq VariableArityParameterDeclaration.nullableDereferenceFinding() = null;
+
   /**
    * Find the location node for the javax.annotation.Nullable annotation in the modifier list.
    * Returns {@code null} if the location of the modifier was not found.

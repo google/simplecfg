@@ -87,4 +87,17 @@ public class NullableDereferenceTest {
     Collection<String> findings = StmtCfgTest.findings("NullableInstanceOf");
     assertThat(findings).isEmpty();
   }
+
+  @Test public void variableArity() {
+    Collection<String> findings = StmtCfgTest.findings("NullableVariableArity");
+    assertThat(findings).isEmpty();
+  }
+
+  @Test public void nullableDereference01() {
+    Collection<String> findings = StmtCfgTest.findings("NullableDereference01");
+    assertThat(findings).containsExactly(
+        "testdata/NullableDereference01.javax:27:12: Dereferencing p, which was declared @Nullable.",
+        "testdata/NullableDereference01.javax:31:12: Dereferencing p, which was declared @Nullable."
+        );
+  }
 }
