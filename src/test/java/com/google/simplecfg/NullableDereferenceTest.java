@@ -51,7 +51,8 @@ public class NullableDereferenceTest {
     assertThat(findings).containsExactly(
         "testdata/NullableNullGuard01.javax:42:25: Dereferencing p, which was declared @Nullable.",
         "testdata/NullableNullGuard01.javax:49:12: Dereferencing p, which was declared @Nullable.",
-        "testdata/NullableNullGuard01.javax:62:12: Dereferencing p, which was declared @Nullable."
+        "testdata/NullableNullGuard01.javax:62:12: Dereferencing p, which was declared @Nullable.",
+        "testdata/NullableNullGuard01.javax:93:12: Dereferencing q, which was declared @Nullable."
         );
   }
 
