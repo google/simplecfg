@@ -74,11 +74,11 @@ public class NullableDereferenceTest {
     assertThat(findings).isEmpty();
   }
 
-  @Test public void dataflowFalsePositives01() {
+  @Test public void dataflow01() {
     Collection<String> findings = StmtCfgTest.findings("NullableDataflow01");
     assertThat(findings).containsExactly(
-        "testdata/NullableDataflow01.javax:31:7: Dereferencing p, which was declared @Nullable.",
-        "testdata/NullableDataflow01.javax:38:7: Dereferencing p, which was declared @Nullable."
+        "testdata/NullableDataflow01.javax:27:7: Dereferencing p, which was declared @Nullable.",
+        "testdata/NullableDataflow01.javax:35:7: Dereferencing p, which was declared @Nullable."
         );
   }
 }

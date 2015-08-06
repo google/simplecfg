@@ -305,6 +305,18 @@ aspect NullableDereferenceAnalysis {
   eq MethodAccess.isNullWhenTrue(Variable var) =
       name().startsWith("isNull") && getNumArg() == 1 && getArg(0).isVariable(var);
 
+  eq VarAccess.isNullWhenTrue(Variable var) = decl().isNullWhenTrue(var);
+
+  syn boolean Variable.isNullWhenTrue(Variable var);
+  eq ParameterDeclaration.isNullWhenTrue(Variable var) = false;
+  eq FieldDeclaration.isNullWhenTrue(Variable var) = false;
+  eq CatchParameterDeclaration.isNullWhenTrue(Variable var) = false;
+  eq InferredParameterDeclaration.isNullWhenTrue(Variable var) = false;
+  eq VariableDeclaration.isNullWhenTrue(Variable var) =
+      type().isBoolean() && hasInit() && isEffectivelyFinal()
+      ? getInit().isNullWhenTrue(var)
+      : false;
+
   /** @return {@code true} if the variable var is null when this expression is false. */
   syn boolean Expr.isNullWhenFalse(Variable var) = false;
 
@@ -330,6 +342,18 @@ aspect NullableDereferenceAnalysis {
   eq MethodAccess.isNullWhenFalse(Variable var) =
       (name().startsWith("isNotNull") || name().startsWith("isNonNull"))
       && getNumArg() == 1 && getArg(0).isVariable(var);
+
+  eq VarAccess.isNullWhenFalse(Variable var) = decl().isNullWhenFalse(var);
+
+  syn boolean Variable.isNullWhenFalse(Variable var);
+  eq ParameterDeclaration.isNullWhenFalse(Variable var) = false;
+  eq FieldDeclaration.isNullWhenFalse(Variable var) = false;
+  eq CatchParameterDeclaration.isNullWhenFalse(Variable var) = false;
+  eq InferredParameterDeclaration.isNullWhenFalse(Variable var) = false;
+  eq VariableDeclaration.isNullWhenFalse(Variable var) =
+      type().isBoolean() && hasInit() && isEffectivelyFinal()
+      ? getInit().isNullWhenFalse(var)
+      : false;
 
   /** @return {@code true} if the variable var is non-null when this expression is true. */
   syn boolean Expr.isNonNullWhenTrue(Variable var) = false;
@@ -357,6 +381,18 @@ aspect NullableDereferenceAnalysis {
       (name().startsWith("isNotNull") || name().startsWith("isNonNull"))
       && getNumArg() == 1 && getArg(0).isVariable(var);
 
+  eq VarAccess.isNonNullWhenTrue(Variable var) = decl().isNonNullWhenTrue(var);
+
+  syn boolean Variable.isNonNullWhenTrue(Variable var);
+  eq ParameterDeclaration.isNonNullWhenTrue(Variable var) = false;
+  eq FieldDeclaration.isNonNullWhenTrue(Variable var) = false;
+  eq CatchParameterDeclaration.isNonNullWhenTrue(Variable var) = false;
+  eq InferredParameterDeclaration.isNonNullWhenTrue(Variable var) = false;
+  eq VariableDeclaration.isNonNullWhenTrue(Variable var) =
+      type().isBoolean() && hasInit() && isEffectivelyFinal()
+      ? getInit().isNonNullWhenTrue(var)
+      : false;
+
   /** @return {@code true} if the variable var is non-null when this expression is false. */
   syn boolean Expr.isNonNullWhenFalse(Variable var) = false;
 
@@ -381,6 +417,18 @@ aspect NullableDereferenceAnalysis {
   // Assume that a method call to X.isNull_(var) is equivalent to a null test on var.
   eq MethodAccess.isNonNullWhenFalse(Variable var) =
       name().startsWith("isNull") && getNumArg() == 1 && getArg(0).isVariable(var);
+
+  eq VarAccess.isNonNullWhenFalse(Variable var) = decl().isNonNullWhenFalse(var);
+
+  syn boolean Variable.isNonNullWhenFalse(Variable var);
+  eq ParameterDeclaration.isNonNullWhenFalse(Variable var) = false;
+  eq FieldDeclaration.isNonNullWhenFalse(Variable var) = false;
+  eq CatchParameterDeclaration.isNonNullWhenFalse(Variable var) = false;
+  eq InferredParameterDeclaration.isNonNullWhenFalse(Variable var) = false;
+  eq VariableDeclaration.isNonNullWhenFalse(Variable var) =
+      type().isBoolean() && hasInit() && isEffectivelyFinal()
+      ? getInit().isNonNullWhenFalse(var)
+      : false;
 
   syn boolean Expr.isNull() = type().isNull();
   eq NullLiteral.isNull() = true;

@@ -15,27 +15,39 @@
  */
 /**
  * This is test data, not real source code!
- * StmtCfgTest builds and tests the CFG for the first block/method in this class.
  */
 import javax.annotation.Nullable;
 
-/**
- * Test false positives that we can not correctly classify because we lack dataflow analysis.
- */
 public class NullableDataflow01 {
   boolean x = false;
 
-  void f1(@Nullable Test p) {
-	boolean conditional = p == null;
-    if (!conditional) {
-      p.f1(p); // Positive.
+  void fp1(@Nullable String p) {
+    boolean var = p == null;
+    if (!var) {
+      p.hashCode(); // False positive: condition variable not effectively final.
+    }
+    var = false;
+  }
+
+  void fp2(@Nullable String p) {
+    boolean var = p != null;
+    if (var) {
+      p.hashCode(); // False positive: condition variable not effectively final.
+    }
+    var = false;
+  }
+
+  void n1(@Nullable String p) {
+    boolean var = p == null;
+    if (!var) {
+      p.hashCode(); // Negative.
     }
   }
 
-  void f2(@Nullable Test p) {
-	boolean conditional = p != null;
-    if (conditional) {
-      p.f1(p); // Positive.
+  void n2(@Nullable String p) {
+    boolean var = p != null;
+    if (var) {
+      p.hashCode(); // Negative.
     }
   }
 }
