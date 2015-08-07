@@ -1,0 +1,79 @@
+/**
+ * Copyright 2015 Google Inc. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
+ * This aspect adds attributes to check if a variable was declared inside an a statement represented
+ * by a particular CFG node.
+ */
+aspect VariableDeclarationScope {
+
+  /** @return {@code true} if this method access has the given variable as receiver. */
+  syn boolean MethodAccess.hasReceiver(Variable receiver) =
+      hasPrevExpr() && prevExpr().isVariable(receiver);
+
+  /**
+   * Test if the CFG node is tied to a statement that declares the variable,
+   * or if the declaration of the variable is somewhere inside the statement this
+   * branch represents.
+   */
+  syn boolean CfgNode.isDeclarationOf(Variable var) = false;
+
+  eq CfgBranch.isDeclarationOf(Variable var) =
+      branchDeclaresVariable(var)
+      || variableDeclaredInsideStatement(var);
+
+  syn boolean CfgBranch.variableDeclaredInsideStatement(Variable var) {
+    Stmt stmt = hostStatement();
+    ASTNode node = (ASTNode) var;
+    while (node != stmt && node != null) {
+      node = node.getParent();
+    }
+    return node == stmt;
+  }
+
+  /** The statement this branch represents.  */
+  inh Stmt CfgBranch.hostStatement();
+
+  /** The statement this expression is part of.  */
+  inh Stmt Expr.hostStatement();
+  eq Stmt.getChild().hostStatement() = this;
+  eq Program.getChild().hostStatement() = null;
+
+  eq IfStmt.branch().hostStatement() = this;
+  eq ConditionalExpr.branch().hostStatement() = hostStatement();
+  eq ForStmt.branch().hostStatement() = this;
+  eq WhileStmt.branch().hostStatement() = this;
+  eq DoStmt.branch().hostStatement() = this;
+  eq EnhancedForStmt.branch().hostStatement() = this;
+  eq SwitchStmt.branch().hostStatement() = this;
+
+  /** Test if the CFG node is tied to a statement that declares the variable. */
+  inh boolean CfgBranch.branchDeclaresVariable(Variable var);
+
+  eq EnhancedForStmt.branch().branchDeclaresVariable(Variable var) =
+      getVariableDeclaration() == var;
+  eq IfStmt.branch().branchDeclaresVariable(Variable var) = false;
+  eq ConditionalExpr.branch().branchDeclaresVariable(Variable var) = false;
+  eq ForStmt.branch().branchDeclaresVariable(Variable var) = false;
+  eq WhileStmt.branch().branchDeclaresVariable(Variable var) = false;
+  eq DoStmt.branch().branchDeclaresVariable(Variable var) = false;
+  eq SwitchStmt.branch().branchDeclaresVariable(Variable var) = false;
+
+  /** Return true if this node corresponds to a branch. */
+  syn boolean CfgNode.isException() = false;
+  eq CfgException.isException() = true;
+
+}

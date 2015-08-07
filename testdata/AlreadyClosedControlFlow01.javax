@@ -132,7 +132,7 @@ class AlreadyClosedControlFlow01 {
         in.close();
         return;
       case 4:
-        in.read(); // Positive finding.
+        in.read();
       default:
         in.close();
     }
