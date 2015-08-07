@@ -72,8 +72,4 @@ aspect VariableDeclarationScope {
   eq DoStmt.branch().branchDeclaresVariable(Variable var) = false;
   eq SwitchStmt.branch().branchDeclaresVariable(Variable var) = false;
 
-  /** Return true if this node corresponds to a branch. */
-  syn boolean CfgNode.isException() = false;
-  eq CfgException.isException() = true;
-
 }

@@ -30,9 +30,17 @@ import java.util.Set;
  */
 aspect SimpleCFG {
 
-  /** Return true if this node corresponds to a method call. */
+  /** @return {@code true} if this node corresponds to a method call. */
   syn boolean CfgNode.isCall() = false;
   eq CfgMethodCall.isCall() = true;
+
+  /** @return {@code true} if this node corresponds to an exception branch. */
+  syn boolean CfgNode.isException() = false;
+  eq CfgException.isException() = true;
+
+  /** @return {@code true} if this node corresponds to a branch. */
+  syn boolean CfgNode.isBranch() = false;
+  eq CfgBranch.isBranch() = true;
 
   /**
    * Successor nodes in the CFG.
