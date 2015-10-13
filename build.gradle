@@ -24,7 +24,7 @@ configurations {
 	all {
 		resolutionStrategy.eachDependency { DependencyResolveDetails details ->
 			if (details.requested.name == 'jastadd2') {
-				details.useVersion '2.1.11-22-g493d35b'
+				details.useVersion '2.1.13'
 			}
 		}
 	}
