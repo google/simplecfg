@@ -4,7 +4,7 @@ buildscript {
 		url 'http://jastadd.org/mvn/'
 	}
 	dependencies {
-		classpath group: 'org.jastadd', name: 'jastaddgradle', version: '1.9.4'
+		classpath group: 'org.jastadd', name: 'jastaddgradle', version: '1.9.6'
 	}
 }
 
@@ -49,7 +49,7 @@ jastadd {
 	parser.name = 'JavaParser'
 }
 
-generateJava << {
+generateJava {
 	ant.copy file: file('third_party/extendj/git/java8/src/org/jastadd/extendj/scanner/JavaScanner.java'),
 		todir: file('src/gen/java/org/jastadd/extendj/scanner'),
 		overwrite: true
