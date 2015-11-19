@@ -49,7 +49,7 @@ jastadd {
 	parser.name = 'JavaParser'
 }
 
-generateJava {
+generateJava << {
 	ant.copy file: file('third_party/extendj/git/java8/src/org/jastadd/extendj/scanner/JavaScanner.java'),
 		todir: file('src/gen/java/org/jastadd/extendj/scanner'),
 		overwrite: true
