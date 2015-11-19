@@ -282,6 +282,8 @@ aspect NullableDereferenceAnalysis {
       getCondition().isNonNullWhenFalse(var);
   eq AndLogicalExpr.getRightOperand().hasNullGuard(Variable var) =
       getLeftOperand().isNonNullWhenTrue(var) || hasNullGuard(var);
+  eq AndBitwiseExpr.getRightOperand().hasNullGuard(Variable var) =
+      getLeftOperand().isNonNullWhenTrue(var) || hasNullGuard(var);
   eq OrLogicalExpr.getRightOperand().hasNullGuard(Variable var) =
       getLeftOperand().isNonNullWhenFalse(var) || hasNullGuard(var);
 
@@ -297,6 +299,9 @@ aspect NullableDereferenceAnalysis {
   eq ParExpr.isNullWhenTrue(Variable var) = getExpr().isNullWhenTrue(var);
 
   eq AndLogicalExpr.isNullWhenTrue(Variable var) =
+      getLeftOperand().isNullWhenTrue(var) || getRightOperand().isNullWhenTrue(var);
+
+  eq AndBitwiseExpr.isNullWhenTrue(Variable var) =
       getLeftOperand().isNullWhenTrue(var) || getRightOperand().isNullWhenTrue(var);
 
   eq OrLogicalExpr.isNullWhenTrue(Variable var) =
@@ -337,6 +342,10 @@ aspect NullableDereferenceAnalysis {
       getLeftOperand().isTrue() && getRightOperand().isNullWhenFalse(var)
       || getRightOperand().isTrue() && getLeftOperand().isNullWhenFalse(var);
 
+  eq AndBitwiseExpr.isNullWhenFalse(Variable var) =
+      getLeftOperand().isTrue() && getRightOperand().isNullWhenFalse(var)
+      || getRightOperand().isTrue() && getLeftOperand().isNullWhenFalse(var);
+
   eq OrLogicalExpr.isNullWhenFalse(Variable var) =
       getLeftOperand().isNullWhenFalse(var) && getRightOperand().isNullWhenFalse(var);
 
@@ -372,6 +381,9 @@ aspect NullableDereferenceAnalysis {
   eq ParExpr.isNonNullWhenTrue(Variable var) = getExpr().isNonNullWhenTrue(var);
 
   eq AndLogicalExpr.isNonNullWhenTrue(Variable var) =
+      getLeftOperand().isNonNullWhenTrue(var) || getRightOperand().isNonNullWhenTrue(var);
+
+  eq AndBitwiseExpr.isNonNullWhenTrue(Variable var) =
       getLeftOperand().isNonNullWhenTrue(var) || getRightOperand().isNonNullWhenTrue(var);
 
   eq OrLogicalExpr.isNonNullWhenTrue(Variable var) =
@@ -413,6 +425,10 @@ aspect NullableDereferenceAnalysis {
   eq ParExpr.isNonNullWhenFalse(Variable var) = getExpr().isNonNullWhenFalse(var);
 
   eq AndLogicalExpr.isNonNullWhenFalse(Variable var) =
+      getLeftOperand().isTrue() && getRightOperand().isNonNullWhenFalse(var)
+      || getRightOperand().isTrue() && getLeftOperand().isNonNullWhenFalse(var);
+
+  eq AndBitwiseExpr.isNonNullWhenFalse(Variable var) =
       getLeftOperand().isTrue() && getRightOperand().isNonNullWhenFalse(var)
       || getRightOperand().isTrue() && getLeftOperand().isNonNullWhenFalse(var);
 

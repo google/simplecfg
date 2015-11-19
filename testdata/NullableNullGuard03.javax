@@ -132,4 +132,9 @@ class NullableNullGuard03 {
     p.size(); // Positive finding.
   }
 
+  void f18(@Nullable String p, boolean b) {
+    if (p != null & b) {
+      p.size(); // Negative finding.
+    }
+  }
 }
