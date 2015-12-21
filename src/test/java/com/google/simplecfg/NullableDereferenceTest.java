@@ -100,4 +100,10 @@ public class NullableDereferenceTest {
         "testdata/NullableDereference01.javax:31:12: Dereferencing p, which was declared @Nullable."
         );
   }
+
+  @Test public void issue11() {
+    Collection<String> findings = StmtCfgTest.findings("NullableDereferenceIssue11");
+    assertThat(findings).isEmpty();
+  }
+
 }
