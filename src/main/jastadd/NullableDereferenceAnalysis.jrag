@@ -290,9 +290,19 @@ aspect NullableDereferenceAnalysis {
   /** @return {@code true} if the variable var is null when this expression is true. */
   syn boolean Expr.isNullWhenTrue(Variable var) = false;
 
+  eq NEExpr.isNullWhenTrue(Variable var) =
+      getLeftOperand().isTrue() && getRightOperand().isNullWhenFalse(var)
+      || getRightOperand().isTrue() && getLeftOperand().isNullWhenFalse(var)
+      || getLeftOperand().isFalse() && getRightOperand().isNullWhenTrue(var)
+      || getRightOperand().isFalse() && getLeftOperand().isNullWhenTrue(var);
+
   eq EQExpr.isNullWhenTrue(Variable var) =
       getLeftOperand().isNull() && getRightOperand().varDecl() == var
-      || getRightOperand().isNull() && getLeftOperand().varDecl() == var;
+      || getRightOperand().isNull() && getLeftOperand().varDecl() == var
+      || getLeftOperand().isTrue() && getRightOperand().isNullWhenTrue(var)
+      || getRightOperand().isTrue() && getLeftOperand().isNullWhenTrue(var)
+      || getLeftOperand().isFalse() && getRightOperand().isNullWhenFalse(var)
+      || getRightOperand().isFalse() && getLeftOperand().isNullWhenFalse(var);
 
   eq LogNotExpr.isNullWhenTrue(Variable var) = getOperand().isNullWhenFalse(var);
 
@@ -332,7 +342,17 @@ aspect NullableDereferenceAnalysis {
 
   eq NEExpr.isNullWhenFalse(Variable var) =
       getLeftOperand().isNull() && getRightOperand().varDecl() == var
-      || getRightOperand().isNull() && getLeftOperand().varDecl() == var;
+      || getRightOperand().isNull() && getLeftOperand().varDecl() == var
+      || getLeftOperand().isTrue() && getRightOperand().isNullWhenTrue(var)
+      || getRightOperand().isTrue() && getLeftOperand().isNullWhenTrue(var)
+      || getLeftOperand().isFalse() && getRightOperand().isNullWhenFalse(var)
+      || getRightOperand().isFalse() && getLeftOperand().isNullWhenFalse(var);
+
+  eq EQExpr.isNullWhenFalse(Variable var) =
+      getLeftOperand().isTrue() && getRightOperand().isNullWhenFalse(var)
+      || getRightOperand().isTrue() && getLeftOperand().isNullWhenFalse(var)
+      || getLeftOperand().isFalse() && getRightOperand().isNullWhenTrue(var)
+      || getRightOperand().isFalse() && getLeftOperand().isNullWhenTrue(var);
 
   eq LogNotExpr.isNullWhenFalse(Variable var) = getOperand().isNullWhenTrue(var);
 
@@ -374,7 +394,17 @@ aspect NullableDereferenceAnalysis {
 
   eq NEExpr.isNonNullWhenTrue(Variable var) =
       getLeftOperand().isNull() && getRightOperand().varDecl() == var
-      || getRightOperand().isNull() && getLeftOperand().varDecl() == var;
+      || getRightOperand().isNull() && getLeftOperand().varDecl() == var
+      || getLeftOperand().isTrue() && getRightOperand().isNonNullWhenFalse(var)
+      || getRightOperand().isTrue() && getLeftOperand().isNonNullWhenFalse(var)
+      || getLeftOperand().isFalse() && getRightOperand().isNonNullWhenTrue(var)
+      || getRightOperand().isFalse() && getLeftOperand().isNonNullWhenTrue(var);
+
+  eq EQExpr.isNonNullWhenTrue(Variable var) =
+      getLeftOperand().isTrue() && getRightOperand().isNonNullWhenTrue(var)
+      || getRightOperand().isTrue() && getLeftOperand().isNonNullWhenTrue(var)
+      || getLeftOperand().isFalse() && getRightOperand().isNonNullWhenFalse(var)
+      || getRightOperand().isFalse() && getLeftOperand().isNonNullWhenFalse(var);
 
   eq LogNotExpr.isNonNullWhenTrue(Variable var) = getOperand().isNullWhenTrue(var);
 
@@ -416,9 +446,19 @@ aspect NullableDereferenceAnalysis {
   /** @return {@code true} if the variable var is non-null when this expression is false. */
   syn boolean Expr.isNonNullWhenFalse(Variable var) = false;
 
+  eq NEExpr.isNonNullWhenFalse(Variable var) =
+      getLeftOperand().isTrue() && getRightOperand().isNonNullWhenTrue(var)
+      || getRightOperand().isTrue() && getLeftOperand().isNonNullWhenTrue(var)
+      || getLeftOperand().isFalse() && getRightOperand().isNonNullWhenFalse(var)
+      || getRightOperand().isFalse() && getLeftOperand().isNonNullWhenFalse(var);
+
   eq EQExpr.isNonNullWhenFalse(Variable var) =
       getLeftOperand().isNull() && getRightOperand().varDecl() == var
-      || getRightOperand().isNull() && getLeftOperand().varDecl() == var;
+      || getRightOperand().isNull() && getLeftOperand().varDecl() == var
+      || getLeftOperand().isTrue() && getRightOperand().isNonNullWhenFalse(var)
+      || getRightOperand().isTrue() && getLeftOperand().isNonNullWhenFalse(var)
+      || getLeftOperand().isFalse() && getRightOperand().isNonNullWhenTrue(var)
+      || getRightOperand().isFalse() && getLeftOperand().isNonNullWhenTrue(var);
 
   eq LogNotExpr.isNonNullWhenFalse(Variable var) = getOperand().isNonNullWhenTrue(var);
 

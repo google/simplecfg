@@ -1,0 +1,200 @@
+/**
+ * Copyright 2015 Google Inc. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+import javax.annotation.Nullable;
+
+/**
+ * This is test data, not real source code!
+ * This contains tests for NEExpr null guards. Each test method contains
+ * one false positive dereference of the parameter p. The parameter is
+ * guarded by a null check in an inequality expression.
+ */
+public class NullableDereferenceNeExpr {
+  /**
+   * Non-null when true condition.
+   * Null test in left hand side, comparing to false.
+   */
+  int nntLhsFalse(@Nullable String p) {
+    if (false != (p != null)) {
+      return p.size();
+    }
+    return 0;
+  }
+
+  /**
+   * Non-null when true condition.
+   * Null test in right hand side, comparing to false.
+   */
+  int nntRhsFalse(@Nullable String p) {
+    if ((p != null) != false) {
+      return p.size();
+    }
+    return 0;
+  }
+
+  /**
+   * Non-null when true condition.
+   * Null test in left hand side, comparing to true.
+   */
+  int nntLhsTrue(@Nullable String p) {
+    if (true != (p == null)) {
+      return p.size();
+    }
+    return 0;
+  }
+
+  /**
+   * Non-null when true condition.
+   * Null test in right hand side, comparing to true.
+   */
+  int nntRhsTrue(@Nullable String p) {
+    if ((p == null) != true) {
+      return p.size();
+    }
+    return 0;
+  }
+
+  /**
+   * Non-null when false condition.
+   * Null test in left hand side, comparing to false.
+   */
+  int nnfLhsFalse(@Nullable String p) {
+    if (false != (p == null)) {
+      return 0;
+    }
+    return p.size();
+  }
+
+  /**
+   * Non-null when false condition.
+   * Null test in right hand side, comparing to false.
+   */
+  int nnfRhsFalse(@Nullable String p) {
+    if ((p == null) != false) {
+      return 0;
+    }
+    return p.size();
+  }
+
+  /**
+   * Non-null when false condition.
+   * Null test in left hand side, comparing to true.
+   */
+  int nnfLhsTrue(@Nullable String p) {
+    if (true != (p != null)) {
+      return 0;
+    }
+    return p.size();
+  }
+
+  /**
+   * Non-null when false condition.
+   * Null test in right hand side, comparing to true.
+   */
+  int nnfRhsTrue(@Nullable String p) {
+    if ((p != null) != true) {
+      return 0;
+    }
+    return p.size();
+  }
+
+  /**
+   * Null when true condition (negated).
+   * Null test in left hand side, comparing to false.
+   */
+  int ntLhsFalse(@Nullable String p) {
+    if (!(false != (p == null))) {
+      return p.size();
+    }
+    return 0;
+  }
+
+  /**
+   * Null when true condition (negated).
+   * Null test in right hand side, comparing to false.
+   */
+  int ntRhsFalse(@Nullable String p) {
+    if (!((p == null) != false)) {
+      return p.size();
+    }
+    return 0;
+  }
+
+  /**
+   * Null when true condition (negated).
+   * Null test in left hand side, comparing to true.
+   */
+  int ntLhsTrue(@Nullable String p) {
+    if (!(true != (p != null))) {
+      return p.size();
+    }
+    return 0;
+  }
+
+  /**
+   * Null when true condition (negated).
+   * Null test in right hand side, comparing to true.
+   */
+  int ntRhsTrue(@Nullable String p) {
+    if (!((p != null) != true)) {
+      return p.size();
+    }
+    return 0;
+  }
+
+  /**
+   * Null when false condition (negated).
+   * Null test in left hand side, comparing to false.
+   */
+  int nfLhsFalse(@Nullable String p) {
+    if (!(false != (p != null))) {
+      return 0;
+    }
+    return p.size();
+  }
+
+  /**
+   * Null when false condition (negated).
+   * Null test in right hand side, comparing to false.
+   */
+  int nfRhsFalse(@Nullable String p) {
+    if (!((p != null) != false)) {
+      return 0;
+    }
+    return p.size();
+  }
+
+  /**
+   * Null when false condition (negated).
+   * Null test in left hand side, comparing to true.
+   */
+  int nfLhsTrue(@Nullable String p) {
+    if (!(true != (p == null))) {
+      return 0;
+    }
+    return p.size();
+  }
+
+  /**
+   * Null when false condition (negated).
+   * Null test in right hand side, comparing to true.
+   */
+  int nfRhsTrue(@Nullable String p) {
+    if (!((p == null) != true)) {
+      return 0;
+    }
+    return p.size();
+  }
+}
