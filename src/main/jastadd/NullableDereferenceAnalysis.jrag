@@ -155,8 +155,9 @@ aspect NullableDereferenceAnalysis {
 
   /**
    * A CFG visitor that searches in the forward CFG for a nullable dereference.
-   * <p>
-   * The search stops at parts of the search tree guarded by a null check on the receiver variable.
+   *
+   * <p>The search stops at parts of the search tree guarded by a null check
+   * on the receiver variable.
    */
   class NullDereferenceLocator implements CfgVisitor {
     private final Variable var;
@@ -277,9 +278,9 @@ aspect NullableDereferenceAnalysis {
   eq WhileStmt.getStmt().hasNullGuard(Variable var) = getCondition().isNonNullWhenTrue(var);
   eq ForStmt.getStmt().hasNullGuard(Variable var) = getCondition().isNonNullWhenTrue(var);
   eq ConditionalExpr.getTrueExpr().hasNullGuard(Variable var) =
-      getCondition().isNonNullWhenTrue(var);
+      getCondition().isNonNullWhenTrue(var) || hasNullGuard(var);
   eq ConditionalExpr.getFalseExpr().hasNullGuard(Variable var) =
-      getCondition().isNonNullWhenFalse(var);
+      getCondition().isNonNullWhenFalse(var) || hasNullGuard(var);
   eq AndLogicalExpr.getRightOperand().hasNullGuard(Variable var) =
       getLeftOperand().isNonNullWhenTrue(var) || hasNullGuard(var);
   eq AndBitwiseExpr.getRightOperand().hasNullGuard(Variable var) =

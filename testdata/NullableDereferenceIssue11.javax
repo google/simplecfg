@@ -1,0 +1,46 @@
+/**
+ * Copyright 2015 Google Inc. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+import javax.annotation.Nullable;
+
+/**
+ * This is test data, not real source code!
+ * Test for GitHub issue #11 (https://github.com/google/simplecfg/issues/11).
+ */
+public class Issue11 {
+  /** Test nullable deref in true-part of conditional expression. */
+  int test(@Nullable String p, boolean maybe) {
+    if (p == null || (maybe ? p.size() != 1 : false)) { // Negative finding.
+      return 1;
+    }
+    return 2;
+  }
+
+  /** Test nullable deref in false-part of conditional expression. */
+  int test2(@Nullable String p, boolean maybe) {
+    if (p == null || (maybe ? false : p.size() != 1)) { // Negative finding.
+      return 1;
+    }
+    return 2;
+  }
+
+  /** Test that the same null-guard used above works outside of conditional expression. */
+  int test3(@Nullable String p) {
+    if (p == null || p.size() != 1) { // Negative finding.
+      return 1;
+    }
+    return 2;
+  }
+}
