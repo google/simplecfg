@@ -109,6 +109,11 @@ public class NullableDereferenceTest {
         );
   }
 
+  @Test public void issue11() {
+    Collection<String> findings = StmtCfgTest.findings("NullableDereferenceIssue11");
+    assertThat(findings).isEmpty();
+  }
+
   @Test public void issue12() {
     Collection<String> findings = StmtCfgTest.findings("NullableDereferenceIssue12");
     assertThat(findings).isEmpty();
