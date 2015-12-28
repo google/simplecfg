@@ -108,4 +108,19 @@ public class NullableDereferenceTest {
         "testdata/NullableDereferenceIssue10.javax:34:31: Dereferencing y, which was declared @Nullable."
         );
   }
+
+  @Test public void issue12() {
+    Collection<String> findings = StmtCfgTest.findings("NullableDereferenceIssue12");
+    assertThat(findings).isEmpty();
+  }
+
+  @Test public void eqExpr() {
+    Collection<String> findings = StmtCfgTest.findings("NullableDereferenceEqExpr");
+    assertThat(findings).isEmpty();
+  }
+
+  @Test public void neExpr() {
+    Collection<String> findings = StmtCfgTest.findings("NullableDereferenceNeExpr");
+    assertThat(findings).isEmpty();
+  }
 }
