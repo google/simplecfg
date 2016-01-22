@@ -132,7 +132,14 @@ public class NullableDereferenceTest {
   @Test public void methodCall() {
     Collection<String> findings = StmtCfgTest.findings("NullableDereferenceMethodCall");
     assertThat(findings).containsExactly(
-        "testdata/NullableDereferenceMethodCall.javax:41:16: Dereferencing p, which was declared @Nullable."
-        );
+        "testdata/NullableDereferenceMethodCall.javax:41:16: "
+        + "Dereferencing p, which was declared @Nullable.");
+  }
+
+  @Test public void issue13() {
+    Collection<String> findings = StmtCfgTest.findings("NullableDereferenceIssue13");
+    assertThat(findings).containsExactly(
+        "testdata/NullableDereferenceIssue13.javax:33:7: "
+        + "Dereferencing obj, which was declared @Nullable.");
   }
 }
