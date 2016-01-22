@@ -1,0 +1,55 @@
+/**
+ * Copyright 2015 Google Inc. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+import javax.annotation.Nullable;
+
+/**
+ * This is test data, not real source code!
+ *
+ * <p>This class contains tests checking that a null dereference
+ * finding is not reported for a parameter p after p has been used
+ * as an argument in a method call. The NullableDereference
+ * analyzer is not an interprocedural analysis, so we can not know
+ * if the method called will perform a null check and ensure
+ * non-nullness of the argument after the call completes. Instead
+ * we should just stop analyzing a parameter after it has been
+ * passed to another method.
+ */
+public class NullableDereferenceMethodCall {
+  public interface SomeApi {
+    public void doSomething(String str);
+  }
+
+  int interfaceMethodCall(@Nullable String p, SomeApi s) {
+    s.doSomething(p);
+    return p.size(); // No finding here, since doSomething might have done a null check.
+  }
+
+  int interfaceMethodCall2(@Nullable String p, SomeApi s) {
+    int size = p.size(); // Finding here: no call yet.
+    s.doSomething(p);
+    return size;
+  }
+
+  int methodCall(@Nullable String p, String q) {
+    q.equals(p);
+    return p.size();
+  }
+
+  int localMethodCall(@Nullable String p) {
+    localMethod(p);
+    return p.size(); // No finding here, we don't analyze even local methods.
+  }
+}

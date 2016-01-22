@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Google Inc. All Rights Reserved.
+ * Copyright 2016 Google Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -127,5 +127,12 @@ public class NullableDereferenceTest {
   @Test public void neExpr() {
     Collection<String> findings = StmtCfgTest.findings("NullableDereferenceNeExpr");
     assertThat(findings).isEmpty();
+  }
+
+  @Test public void methodCall() {
+    Collection<String> findings = StmtCfgTest.findings("NullableDereferenceMethodCall");
+    assertThat(findings).containsExactly(
+        "testdata/NullableDereferenceMethodCall.javax:41:16: Dereferencing p, which was declared @Nullable."
+        );
   }
 }

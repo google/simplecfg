@@ -25,16 +25,10 @@
  * p.x(); // Guarded by null check above.
  * }
  *
- * <p>The analysis also assumes that a method call to {@code checkNotNull}, or {@code isNotNull}
- * will also work as a null guard. There are more possible variations of methods guarding against
- * nullness that could be considered, but currently we only check for these methods:
- *
- * <ul>
- * <li>{@code checkNotNull}, {@code checkNonNull}: assume that any control flow path following this
- * call with the analyzed parameter as the first argument are safe for dereferencing that parameter
- * <li>{@code isNotNull}, {@code isNonNull}: assume that calls to methods with names that start with
- * these prefixes guard the single argument against nullness
- * </ul>
+ * <p>The analysis is not intraprocedural, so in order to avoid false positives
+ * where a method call guards against nullness the analyzer assumes that
+ * calling a method with an argument x results in an exception if x is null and
+ * thus works like an effective null guard for x.
  *
  * <p>To find potential null dereferences on nullable parameters, the analysis does a forward CFG
  * traversal from the entry-point of the method. Note that this is only done whenever a
@@ -226,16 +220,22 @@ aspect NullableDereferenceAnalysis {
   syn boolean CfgNode.isNullGuard(Variable var, CfgNode succ) = false;
 
   /**
-   * We assume that calling a method named checkNotNull on the variable var will throw an exception
-   * if the argument is null.
+   * We assume that calling a method with the variable var as an argument
+   * results in an exception thrown by the method call if var is null. This is
+   * not true for many methods, but it should reduce the false positive rate
+   * for the NullableDereference analyzer.
    */
   eq CfgMethodCall.isNullGuard(Variable var, CfgNode succ) {
     if (succ instanceof CfgException) {
       return false;
     }
     MethodAccess access = methodAccess();
-    return (access.name().equals("checkNotNull") || access.name().equals("checkNonNull"))
-        && access.getNumArg() >= 1 && access.getArg(0).isVariable(var);
+    for (Expr arg : access.getArgList()) {
+      if (arg.isVariable(var)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /** Check if this branch has a null-guarding condition.  */
