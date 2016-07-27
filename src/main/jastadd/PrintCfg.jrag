@@ -122,8 +122,8 @@ aspect PrintCfg {
   eq WhileStmt.branch().branchLabel() = "while (" + getCondition().prettyPrint() + ")";
   eq DoStmt.branch().branchLabel() = "do_while (" + getCondition().prettyPrint() + ")";
   eq EnhancedForStmt.branch().branchLabel() = String.format("for (%s %s : %s)",
-      getVariableDeclaration().getTypeAccess().prettyPrint(),
-      getVariableDeclaration().getID(),
+      getVariableDecl().getTypeAccess().prettyPrint(),
+      getVariableDecl().getID(),
       getExpr().prettyPrint());
   eq SwitchStmt.branch().branchLabel() = "switch (" + getExpr().prettyPrint() + ")";
 

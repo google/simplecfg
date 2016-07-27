@@ -224,18 +224,18 @@ aspect SimpleCFG {
   eq LabeledStmt.entry() = getStmt().entry();
 
   eq VarDeclStmt.entry() =
-      getNumSingleDecl() > 0
-      ? getSingleDecl(0).entry()
+      getNumDeclarator() > 0
+      ? getDeclarator(0).entry()
       : follow();
 
-  eq VarDeclStmt.getSingleDecl(int index).follow() =
-      index+1 < getNumSingleDecl()
-      ? getSingleDecl(index+1).entry()
+  eq VarDeclStmt.getDeclarator(int index).follow() =
+      index + 1 < getNumDeclarator()
+      ? getDeclarator(index + 1).entry()
       : follow();
 
-  inh CfgNode VariableDeclaration.follow();
+  inh CfgNode VariableDeclarator.follow();
 
-  syn CfgNode VariableDeclaration.entry() =
+  syn CfgNode VariableDeclarator.entry() =
       hasInit()
       ? getInit().entry()
       : follow();

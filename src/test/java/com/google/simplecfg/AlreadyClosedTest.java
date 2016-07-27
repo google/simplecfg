@@ -32,7 +32,7 @@ public class AlreadyClosedTest {
   @Test public void test01() {
     Collection<String> findings = StmtCfgTest.findings("Close01", Program.NO_TYPE_FILTER);
     assertThat(findings).containsExactly(
-        "testdata/Close01.javax:23:12: close() may have already been called on writer at this point");
+        "testdata/Close01.javax:23:5: close() may have already been called on writer at this point");
   }
 
   /**
@@ -47,7 +47,7 @@ public class AlreadyClosedTest {
         Program.NO_TYPE_FILTER);
     assertThat(findings).hasSize(1);
     assertThat(findings).containsExactly(
-        "testdata/AlreadyClosedWriter01.javax:27:12: close() may have already been called on writer at this point");
+        "testdata/AlreadyClosedWriter01.javax:27:5: close() may have already been called on writer at this point");
   }
 
   @Test public void controlFlow01() {
