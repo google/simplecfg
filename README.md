@@ -41,9 +41,17 @@ the ExtendJ repository into the `third_party/extendj/` directory.
 Building
 --------
 
+Note that you must have the Git submodule `third_party/extendj/git` in
+order to build SimpleCFG. To download the submodule, use the following commands:
+
+    git submodule init
+    git submodule update
+
+
 Build the Simplified CFG generator Jar file by running the following Gradle command:
 
     gradle jar
+
 
 Testing
 -------
