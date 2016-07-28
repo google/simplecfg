@@ -329,11 +329,12 @@ aspect NullableDereferenceAnalysis {
   eq VarAccess.isNullWhenTrue(Variable var) = decl().isNullWhenTrue(var);
 
   syn boolean Variable.isNullWhenTrue(Variable var);
+  eq EnumConstant.isNullWhenTrue(Variable var) = false;
   eq ParameterDeclaration.isNullWhenTrue(Variable var) = false;
-  eq FieldDeclaration.isNullWhenTrue(Variable var) = false;
+  eq FieldDeclarator.isNullWhenTrue(Variable var) = false;
   eq CatchParameterDeclaration.isNullWhenTrue(Variable var) = false;
   eq InferredParameterDeclaration.isNullWhenTrue(Variable var) = false;
-  eq VariableDeclaration.isNullWhenTrue(Variable var) =
+  eq VariableDeclarator.isNullWhenTrue(Variable var) =
       type().isBoolean() && hasInit() && isEffectivelyFinal()
       ? getInit().isNullWhenTrue(var)
       : false;
@@ -381,11 +382,12 @@ aspect NullableDereferenceAnalysis {
   eq VarAccess.isNullWhenFalse(Variable var) = decl().isNullWhenFalse(var);
 
   syn boolean Variable.isNullWhenFalse(Variable var);
+  eq EnumConstant.isNullWhenFalse(Variable var) = false;
   eq ParameterDeclaration.isNullWhenFalse(Variable var) = false;
-  eq FieldDeclaration.isNullWhenFalse(Variable var) = false;
+  eq FieldDeclarator.isNullWhenFalse(Variable var) = false;
   eq CatchParameterDeclaration.isNullWhenFalse(Variable var) = false;
   eq InferredParameterDeclaration.isNullWhenFalse(Variable var) = false;
-  eq VariableDeclaration.isNullWhenFalse(Variable var) =
+  eq VariableDeclarator.isNullWhenFalse(Variable var) =
       type().isBoolean() && hasInit() && isEffectivelyFinal()
       ? getInit().isNullWhenFalse(var)
       : false;
@@ -432,11 +434,12 @@ aspect NullableDereferenceAnalysis {
   eq VarAccess.isNonNullWhenTrue(Variable var) = decl().isNonNullWhenTrue(var);
 
   syn boolean Variable.isNonNullWhenTrue(Variable var);
+  eq EnumConstant.isNonNullWhenTrue(Variable var) = false;
   eq ParameterDeclaration.isNonNullWhenTrue(Variable var) = false;
-  eq FieldDeclaration.isNonNullWhenTrue(Variable var) = false;
+  eq FieldDeclarator.isNonNullWhenTrue(Variable var) = false;
   eq CatchParameterDeclaration.isNonNullWhenTrue(Variable var) = false;
   eq InferredParameterDeclaration.isNonNullWhenTrue(Variable var) = false;
-  eq VariableDeclaration.isNonNullWhenTrue(Variable var) =
+  eq VariableDeclarator.isNonNullWhenTrue(Variable var) =
       type().isBoolean() && hasInit() && isEffectivelyFinal()
       ? getInit().isNonNullWhenTrue(var)
       : false;
@@ -486,11 +489,12 @@ aspect NullableDereferenceAnalysis {
   eq VarAccess.isNonNullWhenFalse(Variable var) = decl().isNonNullWhenFalse(var);
 
   syn boolean Variable.isNonNullWhenFalse(Variable var);
+  eq EnumConstant.isNonNullWhenFalse(Variable var) = false;
   eq ParameterDeclaration.isNonNullWhenFalse(Variable var) = false;
-  eq FieldDeclaration.isNonNullWhenFalse(Variable var) = false;
+  eq FieldDeclarator.isNonNullWhenFalse(Variable var) = false;
   eq CatchParameterDeclaration.isNonNullWhenFalse(Variable var) = false;
   eq InferredParameterDeclaration.isNonNullWhenFalse(Variable var) = false;
-  eq VariableDeclaration.isNonNullWhenFalse(Variable var) =
+  eq VariableDeclarator.isNonNullWhenFalse(Variable var) =
       type().isBoolean() && hasInit() && isEffectivelyFinal()
       ? getInit().isNonNullWhenFalse(var)
       : false;

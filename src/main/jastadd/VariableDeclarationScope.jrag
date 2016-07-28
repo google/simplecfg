@@ -64,7 +64,7 @@ aspect VariableDeclarationScope {
   inh boolean CfgBranch.branchDeclaresVariable(Variable var);
 
   eq EnhancedForStmt.branch().branchDeclaresVariable(Variable var) =
-      getVariableDeclaration() == var;
+      getVariableDecl() == var;
   eq IfStmt.branch().branchDeclaresVariable(Variable var) = false;
   eq ConditionalExpr.branch().branchDeclaresVariable(Variable var) = false;
   eq ForStmt.branch().branchDeclaresVariable(Variable var) = false;

@@ -1,10 +1,8 @@
 buildscript {
 	repositories.mavenLocal()
-	repositories.maven {
-		url 'http://jastadd.org/mvn/'
-	}
+	repositories.mavenCentral()
 	dependencies {
-		classpath group: 'org.jastadd', name: 'jastaddgradle', version: '1.9.6'
+		classpath group: 'org.jastadd', name: 'jastaddgradle', version: '1.10.1'
 	}
 }
 
@@ -30,6 +28,7 @@ dependencies {
 }
 
 jastadd {
+	configureModuleBuild()
 	modules 'modules' // Module source.
 	module = 'simplecfg' // The module to build.
 
@@ -38,14 +37,30 @@ jastadd {
 	parser.name = 'JavaParser'
 }
 
-generateJava.dependsOn 'copyScannerSource'
+compileJava.dependsOn 'copyScannerSource'
 
-// Copy the scanner decorator from ExtendJ into src/gen.
 task copyScannerSource(type: Copy) {
+	description 'Copy the scanner decorator from ExtendJ into src/gen.'
 	from 'third_party/extendj/git/java8/src/org/extendj/scanner'
 	into 'src/gen/java/com/google/simplecfg/scanner'
 	include 'JavaScanner.java'
 	filter { line -> line.replaceAll('org.extendj', 'com.google.simplecfg') }
+}
+
+compileJava.dependsOn 'generateDefaultParser'
+
+task generateDefaultParser() {
+	description 'Generate a minimal parser for the ExtendJ build to work.'
+	outputs.file file('src/gen/java/org/extendj/parser/JavaParser.java')
+	doLast {
+		def directory = file('src/gen/java/org/extendj/parser')
+		directory.mkdirs()
+		def parserfile = file('src/gen/java/org/extendj/parser/JavaParser.java')
+		parserfile.withWriter('utf-8') { writer ->
+			writer.writeLine 'package org.extendj.parser;'
+				writer.writeLine 'public class JavaParser extends com.google.simplecfg.parser.JavaParser { }'
+		}
+	}
 }
 
 test {
