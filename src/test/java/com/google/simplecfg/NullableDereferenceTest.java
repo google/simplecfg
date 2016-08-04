@@ -142,4 +142,11 @@ public class NullableDereferenceTest {
         "testdata/NullableDereferenceIssue13.javax:33:7: "
         + "Dereferencing obj, which was declared @Nullable.");
   }
+
+  @Test public void issue22() {
+    Collection<String> findings = StmtCfgTest.findings("NullableDereferenceIssue22");
+    assertThat(findings).containsExactly(
+        "testdata/NullableDereferenceIssue22.javax:25:12: "
+        + "Dereferencing obj, which was declared @Nullable.");
+  }
 }
